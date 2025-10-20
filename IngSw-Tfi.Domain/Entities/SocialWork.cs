@@ -4,4 +4,5 @@ namespace IngSw_Tfi.Domain.Entities;
 
 public class SocialWork : EntityBase
 {
+    public string? Name { get; set; }
 }
