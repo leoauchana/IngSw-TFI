@@ -2,5 +2,6 @@
 
 public class IncomeDto
 {
-
+    public record Request();
+    public record Response();
 }

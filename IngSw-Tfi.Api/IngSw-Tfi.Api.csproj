@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
+    <ProjectReference Include="..\IngSw-Tfi.Application\IngSw-Tfi.Application.csproj" />
   </ItemGroup>
 
 </Project>

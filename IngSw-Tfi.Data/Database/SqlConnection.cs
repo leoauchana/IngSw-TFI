@@ -5,11 +5,9 @@ namespace IngSw_Tfi.Data.Database;
 
 public class SqlConnection
 {
-    public class SqlConnectionFactory
-    {
         private readonly string _connectionString;
 
-        public SqlConnectionFactory(string connectionString)
+        public SqlConnection(string connectionString)
         {
             _connectionString = connectionString;
         }
@@ -18,5 +16,4 @@ public class SqlConnection
         {
             return new MySqlConnection(_connectionString);
         }
-    }
 }
