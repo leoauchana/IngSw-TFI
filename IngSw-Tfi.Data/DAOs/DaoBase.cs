@@ -12,9 +12,9 @@ public abstract class DaoBase
     {
         _connection = connection;
     }
-    protected async Task<List<IDataRecord>> ExecuteReader(string query, params MySqlParameter[] parameters)
+    protected async Task<List<Dictionary<string, object>>?> ExecuteReader(string query, params MySqlParameter[] parameters)
     {
-        var result = new List<IDataRecord>();
+        var result = new List<Dictionary<string, object>>();
 
         using (var conn = _connection.CreateConnection())
         using (var cmd = new MySqlCommand(query, (MySqlConnection)conn))
@@ -26,12 +26,15 @@ public abstract class DaoBase
 
             using (var reader = await cmd.ExecuteReaderAsync())
             {
-                while ( await reader.ReadAsync())
-                    result.Add(reader);
+                var row = new Dictionary<string, object>(reader.FieldCount);
+                for (int i = 0; i < reader.FieldCount; i++)
+                    row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+
+                result.Add(row);
             }
         }
 
-        return result;
+        return result.Count > 0 ? result : null;
     }
     protected async Task<int> ExecuteNonQuery(string query, params MySqlParameter[] parameters)
     {

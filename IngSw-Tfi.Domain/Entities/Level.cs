@@ -6,5 +6,5 @@ public class Level : EntityBase
 {
     public int Priority { get; set; }
     public string? Name { get; set; }
-    public TimeOnly MaximumDuration { get; set; }
+    public TimeSpan MaximumDuration { get; set; }
 }

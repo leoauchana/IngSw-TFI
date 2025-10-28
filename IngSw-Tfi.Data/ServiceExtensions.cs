@@ -13,5 +13,6 @@ public static class ServiceExtensions
     {
         services.AddSingleton(new SqlConnection(configuration.GetConnectionString("DbMySql")!));
         services.AddScoped<IRepository<Income>, IncomeRepository>();
+        services.AddScoped<IPatientRepository, PatientRepository>();
     }
 }
