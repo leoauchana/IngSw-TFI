@@ -2,6 +2,6 @@
 
 public class Patient : Person
 {
-    public Affiliate? SocialWork { get; set; }
+    public Affiliate? Affiliate { get; set; }
     public Domicilie? Domicilie { get; set; }
 }

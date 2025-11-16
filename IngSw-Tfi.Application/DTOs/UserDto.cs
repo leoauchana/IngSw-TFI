@@ -1,0 +1,10 @@
+﻿namespace IngSw_Tfi.Application.DTOs;
+
+public class UserDto
+{
+    public record Request(string? email, string? password);
+    public record Response(string email, string name, string lastName, string cuil,
+        string licence, string phoneNumber, string typeEmployee/*, string token*/);
+    public record RequestRegister(string email, string password, string confirmPassword, string name, string lastName, string cuil,
+        string licence, string phoneNumber, string typeEmployee);
+}

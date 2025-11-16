@@ -1,6 +1,5 @@
 ﻿namespace IngSw_Tfi.Domain.Entities;
 
-public class Doctor : Person
+public class Doctor : Employee
 {
-    public string? Registration { get; set; }
 }
