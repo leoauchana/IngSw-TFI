@@ -1,4 +1,8 @@
 
+using IngSw_Tfi.Api.Middlewares;
+using IngSw_Tfi.Application.Interfaces;
+using IngSw_Tfi.Application.Services;
+
 namespace IngSw_Tfi.Api
 {
     public class Program
@@ -12,7 +16,6 @@ namespace IngSw_Tfi.Api
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
@@ -25,8 +28,11 @@ namespace IngSw_Tfi.Api
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
+
             app.UseAuthorization();
 
+            app.UseMiddleware<ExceptionMiddleware>();
 
             app.MapControllers();
 

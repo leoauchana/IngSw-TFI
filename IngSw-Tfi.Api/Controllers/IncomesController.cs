@@ -13,13 +13,13 @@ public class IncomesController : ControllerBase
     {
         _incomesService = incomesService;
     }
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
+    [HttpGet("getAllEarrings")]
+    public async Task<IActionResult> GetAllEarrings()
     {
-        var listIncomes = await _incomesService.GetAll();
+        var listIncomes = await _incomesService.GetAllEarrings();
         return Ok(new
         {
-            Message = "Ingresos registrados",
+            Message = "Ingresos pendientes",
             listIncomes
         });
     }
