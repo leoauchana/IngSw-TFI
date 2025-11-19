@@ -1,8 +1,10 @@
 ﻿using IngSw_Tfi.Domain.Common;
+using IngSw_Tfi.Domain.ValueObjects;
 
 namespace IngSw_Tfi.Domain.Entities;
 
-public class BloodPressure : EntityBase
+public class BloodPressure
 {
-
+    public FrecuencySystolic? FrecuencySystolic{ get; set; }
+    public FrecuencyDiastolic? FrecuencyDiastolic{ get; set; }
 }
