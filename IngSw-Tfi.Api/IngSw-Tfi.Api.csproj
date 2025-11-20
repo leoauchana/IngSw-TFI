@@ -13,6 +13,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\IngSw-Tfi.Application\IngSw-Tfi.Application.csproj" />
+    <ProjectReference Include="..\IngSw-Tfi.Data\IngSw-Tfi.Data.csproj" />
+    <ProjectReference Include="..\IngSw-Tfi.Domain\IngSw-Tfi.Domain.csproj" />
+    <ProjectReference Include="..\IngSw-Tfi.Transversal\IngSw-Tfi.Transversal.csproj" />
   </ItemGroup>
 
 </Project>
