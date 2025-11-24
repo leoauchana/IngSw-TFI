@@ -4,6 +4,10 @@ namespace IngSw_Tfi.Domain.Entities;
 
 public class Affiliate : EntityBase
 {
+    public Affiliate()
+    {
+        Id = Guid.NewGuid();
+    }
     public string? AffiliateNumber { get; set; }
     public SocialWork? SocialWork { get; set; }
 }

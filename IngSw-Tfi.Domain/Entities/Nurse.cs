@@ -2,4 +2,8 @@
 
 public class Nurse : Employee
 {
+    public Nurse()
+    {
+        Id = Guid.NewGuid();
+    }
 }

@@ -30,11 +30,6 @@ public class IncomeDao : DaoBase
     }
     public async Task AddIncome(Income newIncome)
     {
-        //var query = """
-        //    INSERT INTO incomes (nurse_id_nurse, id_patient_id, status, level, stat_date, end_date_time, temperature,
-        //    heart_rate, respiratory_rate, report, blood_pressure) VALUES (@IdNurse, @IdPatient, @IncomeStatus, @EmergencyLevel, 
-        //    @StartDate, @EndDate, @Temperature, @HeartRate, @RespiratoryRate, @Report, @BloodPressure)
-        //    """;
         var query = """
             INSERT INTO admission (id_admission, patient_id_patient, status, level, start_date, end_date_time, temperature,
             heart_rate, respiratory_rate, report, systolic_rate, diastolic_rate) VALUES (@IdAdmission, @IdPatient, @IncomeStatus, @EmergencyLevel, 
@@ -42,8 +37,7 @@ public class IncomeDao : DaoBase
             """;
         var parameters = new[]{
             //new MySqlParameter("@IdNurse", newIncome.Nurse!.Id),
-            //new MySqlParameter("@IdPatient", newIncome.Patient!.Id),
-            new MySqlParameter("@IdAdmission", Guid.NewGuid()),
+            new MySqlParameter("@IdAdmission", newIncome.Id),
             new MySqlParameter("@IdPatient", newIncome.Patient!.Id),
             new MySqlParameter("@IncomeStatus", newIncome.IncomeStatus),
             new MySqlParameter("@EmergencyLevel", newIncome.EmergencyLevel),

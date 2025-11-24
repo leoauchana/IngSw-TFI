@@ -11,14 +11,15 @@ public class PatientDao : DaoBase
     public async Task AddPatient(Patient newPatient)
     {
         var query = """
-            INSERT INTO patient (id, name, last_name, cuil, email, street_domicilie, number_domicilie, locality_domicilie) 
-            VALUES (@Id, @Name, @LastName, @Cuil, @Email, @Street, @Number, @Locality)
+            INSERT INTO patient (id_patient, health_insurance_id, first_name, last_name, patient_cuil, email, street_address, number_address, town_address) 
+            VALUES (@Id, @IdHealth, @Name, @LastName, @Cuil, @Email, @Street, @Number, @Locality)
             """;
         var parameters = new[]{
             new MySqlParameter("@Id", newPatient.Id),
+            new MySqlParameter("@IdHealth", newPatient.Affiliate?.Id ?? (object)DBNull.Value),
             new MySqlParameter("@Name", newPatient.Name),
             new MySqlParameter("@LastName", newPatient.LastName),
-            new MySqlParameter("@Cuil", newPatient.Cuil),
+            new MySqlParameter("@Cuil", newPatient.Cuil!.Value),
             new MySqlParameter("@Email", newPatient.Email),
             new MySqlParameter("@Street", newPatient.Domicilie!.Street),
             new MySqlParameter("@Number", newPatient.Domicilie.Number),

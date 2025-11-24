@@ -26,7 +26,23 @@ namespace IngSw_Tfi.Api
 
             builder.Services.AddTransversalServices();
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend", policy =>
+                {
+                    policy
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials()
+                        .WithOrigins(
+                            "http://localhost:5173"
+                        );
+                });
+            });
+
             var app = builder.Build();
+
+            app.UseCors("AllowFrontend");
 
             app.UseHttpsRedirection();
 

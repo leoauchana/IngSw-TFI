@@ -4,6 +4,10 @@ namespace IngSw_Tfi.Domain.Entities;
 
 public class Attention : EntityBase
 {
+    public Attention()
+    {
+        Id = Guid.NewGuid();
+    }
     public Doctor? Doctor { get; set; }
     public string? Report { get; set; }
 }
