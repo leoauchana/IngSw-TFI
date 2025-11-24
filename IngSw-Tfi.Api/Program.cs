@@ -45,12 +45,12 @@ namespace IngSw_Tfi.Api
             app.UseCors("AllowFrontend");
 
             app.UseHttpsRedirection();
+            
+            app.UseMiddleware<ExceptionMiddleware>();
 
             app.UseAuthentication();
 
             app.UseAuthorization();
-
-            app.UseMiddleware<ExceptionMiddleware>();
 
             app.MapControllers();
 
