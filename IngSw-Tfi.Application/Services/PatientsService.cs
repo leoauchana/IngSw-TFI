@@ -81,4 +81,14 @@ public class PatientsService : IPatientsService
                     pr.Email!, pr.Domicilie!.Street!, pr.Domicilie.Number, pr.Domicilie.Locality!))
                     .ToList();
     }
+    public async Task<List<PatientDto.Response>?> GetAll()
+    {
+        //var cuilValid = Cuil.Create(cuilPatient);
+        var patientsFounds = await _patientRepository.GetAll();
+        if (patientsFounds == null || !(patientsFounds.Count > 0))
+            throw new NullException($"No hay pacientes registrados.");
+        return patientsFounds.Select(pr => new PatientDto.Response(pr.Cuil!.Value!, pr.Name!, pr.LastName!,
+                    pr.Email!, pr.Domicilie!.Street!, pr.Domicilie.Number, pr.Domicilie.Locality!))
+                    .ToList();
+    }
 }

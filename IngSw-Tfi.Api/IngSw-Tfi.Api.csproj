@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\IngSw-Tfi.Application\IngSw-Tfi.Application.csproj" />
+    <ProjectReference Include="..\IngSw-Tfi.Transversal\IngSw-Tfi.Transversal.csproj" />
   </ItemGroup>
 
 </Project>

@@ -15,8 +15,9 @@ public class Income : EntityBase
     public Nurse? Nurse { get; set; }
     public EmergencyLevel EmergencyLevel { get; set; }
     public IncomeStatus? IncomeStatus { get; set; }
-    public string? Description { get; set; }
-    public DateTime? IncomeDate { get; set; }
+    public string? Report { get; set; }
+    public DateTime IncomeDate { get; set; }
+    public float Temperature { get; set; }
     public FrecuencyCardiac? FrecuencyCardiac { get; set; }
     public FrecuencyRespiratory? FrecuencyRespiratory { get; set; }
     public BloodPressure? BloodPressure { get; set; }

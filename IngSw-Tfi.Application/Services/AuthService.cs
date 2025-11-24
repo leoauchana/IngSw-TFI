@@ -76,7 +76,6 @@ public class AuthService : IAuthService
             Cuil = Cuil.Create(userData.cuil),
             Email = userData.email,
             PhoneNumber = userData.phoneNumber,
-            Registration = userData.licence,
             User = new User
             {
                 Email = userData.email,

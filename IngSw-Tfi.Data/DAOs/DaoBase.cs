@@ -12,7 +12,9 @@ public abstract class DaoBase
     {
         _connection = connection;
     }
-    protected async Task<List<Dictionary<string, object>>?> ExecuteReader(string query, params MySqlParameter[] parameters)
+    protected async Task<List<Dictionary<string, object>>?> ExecuteReader(
+        string query,
+        params MySqlParameter[] parameters)
     {
         var result = new List<Dictionary<string, object>>();
 
@@ -26,11 +28,15 @@ public abstract class DaoBase
 
             using (var reader = await cmd.ExecuteReaderAsync())
             {
-                var row = new Dictionary<string, object>(reader.FieldCount);
-                for (int i = 0; i < reader.FieldCount; i++)
-                    row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                while (await reader.ReadAsync())   // <---- SUPER IMPORTANTE
+                {
+                    var row = new Dictionary<string, object>(reader.FieldCount);
 
-                result.Add(row);
+                    for (int i = 0; i < reader.FieldCount; i++)
+                        row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+
+                    result.Add(row);
+                }
             }
         }
 

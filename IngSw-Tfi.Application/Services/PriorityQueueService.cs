@@ -1,21 +1,28 @@
 ﻿using IngSw_Tfi.Application.Interfaces;
 using IngSw_Tfi.Domain.Entities;
 using IngSw_Tfi.Domain.Enums;
+using IngSw_Tfi.Domain.ValueObjects;
 
 namespace IngSw_Tfi.Application.Services;
 
 public class PriorityQueueService : IPriorityQueueService
 {
-    private readonly PriorityQueue<Income, EmergencyLevel> _queue
-            = new PriorityQueue<Income, EmergencyLevel>();
+    private readonly PriorityQueue<Income, IncomePriority> _queue
+            = new PriorityQueue<Income, IncomePriority>(
+                Comparer<IncomePriority>.Create((a, b) => a.CompareTo(b)));
 
     private readonly object _lock = new object();
 
-    public void Enqueue(Income income)
+    public void Enqueue(Income income)  
     {
         lock (_lock)
         {
-            _queue.Enqueue(income, income.EmergencyLevel);
+            var priority = new IncomePriority(
+                income.EmergencyLevel,
+                income.IncomeDate
+                );
+
+            _queue.Enqueue(income, priority);
         }
     }
 
@@ -32,8 +39,9 @@ public class PriorityQueueService : IPriorityQueueService
     {
         lock (_lock)
         {
-            // DEVOLVER COPIA, no la cola interna
             return _queue.UnorderedItems
+                        .OrderBy(x => x.Priority,
+                              Comparer<IncomePriority>.Create((a, b) => a.CompareTo(b)))
                          .Select(x => x.Element)
                          .ToList();
         }

@@ -14,9 +14,9 @@ public class IncomesController : ControllerBase
         _incomesService = incomesService;
     }
     [HttpGet("getAllEarrings")]
-    public async Task<IActionResult> GetAllEarrings()
+    public IActionResult GetAllEarrings()
     {
-        var listIncomes = await _incomesService.GetAllEarrings();
+        var listIncomes = _incomesService.GetAllEarrings();
         return Ok(new
         {
             Message = "Ingresos pendientes",

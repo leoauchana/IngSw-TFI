@@ -7,4 +7,9 @@ public class BloodPressure
 {
     public FrecuencySystolic? FrecuencySystolic{ get; set; }
     public FrecuencyDiastolic? FrecuencyDiastolic{ get; set; }
+
+    public override string ToString()
+    {
+        return $"{FrecuencySystolic!.Value}/{FrecuencyDiastolic!.Value}";
+    }
 }

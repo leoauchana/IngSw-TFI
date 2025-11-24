@@ -2,6 +2,7 @@
 using IngSw_Tfi.Domain.Entities;
 using IngSw_Tfi.Domain.Repository;
 using IngSw_Tfi.Domain.ValueObjects;
+using System.Collections.Generic;
 
 namespace IngSw_Tfi.Data.Repositories;
 
@@ -12,9 +13,13 @@ public class PatientRepository : IPatientRepository
     {
         _patientDao = patientDao;
     }
-    public Task<List<Patient>?> GetAll()
+    public async Task<List<Patient>?> GetAll()
     {
-        throw new NotImplementedException();
+        var patientsFound = await _patientDao.GetAll();
+        if (patientsFound == null) return null;
+        return patientsFound?
+                    .Select(p => MapEntity(p))
+                    .ToList();
     }
     public async Task<List<Patient>?> GetByCuil(string cuilPatient)
     {
@@ -28,19 +33,20 @@ public class PatientRepository : IPatientRepository
     {
         throw new NotImplementedException();
     }
-    private Patient MapEntity(Dictionary<string, object>? reader)
+    private Patient MapEntity(Dictionary<string, object> reader)
     {
         return new Patient
         {
-            Id = (Guid)reader["id"],
-            Name = reader["name"]?.ToString(),
-            LastName = reader["last_name"].ToString(),
-            Cuil = Cuil.Create(reader["cuil"].ToString()),
+            Id = Guid.Parse(reader.GetValueOrDefault("id_patient")!.ToString()!),
+            Name = reader.GetValueOrDefault("first_name")!.ToString(),
+            LastName = reader.GetValueOrDefault("last_name")!.ToString(),
+            Cuil = Cuil.Create(reader.GetValueOrDefault("patient_cuil")!.ToString()!),
+            Email = reader.GetValueOrDefault("email")!.ToString(),
             Domicilie = new Domicilie
             {
-                Number = Convert.ToInt32(reader["number"]),
-                Street = reader["street"].ToString(),
-                Locality = reader["locality"].ToString()
+                Number = int.Parse(reader.GetValueOrDefault("number_address")!.ToString()!),
+                Street = reader.GetValueOrDefault("street_address")!.ToString(),
+                Locality = reader.GetValueOrDefault("town_address")!.ToString()
             }
         };
     }

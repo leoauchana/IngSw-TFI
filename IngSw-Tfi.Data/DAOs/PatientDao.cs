@@ -11,7 +11,7 @@ public class PatientDao : DaoBase
     public async Task AddPatient(Patient newPatient)
     {
         var query = """
-            INSERT INTO patients (id, name, last_name, cuil, email, street_domicilie, number_domicilie, locality_domicilie) 
+            INSERT INTO patient (id, name, last_name, cuil, email, street_domicilie, number_domicilie, locality_domicilie) 
             VALUES (@Id, @Name, @LastName, @Cuil, @Email, @Street, @Number, @Locality)
             """;
         var parameters = new[]{
@@ -26,9 +26,14 @@ public class PatientDao : DaoBase
         };
         await ExecuteNonQuery(query, parameters);
     }
+    public async Task<List<Dictionary<string, object>>?> GetAll()
+    {
+        var query = "SELECT * FROM patient";
+        return await ExecuteReader(query);
+    }
     public async Task<List<Dictionary<string, object>>?> GetByCuil(string cuilPatient)
     {
-        var query = "SELECT * FROM patients WHERE cuil LIKE @CuilPatient";
+        var query = "SELECT * FROM patient WHERE patient_cuil LIKE @CuilPatient";
         var parameters = new MySqlParameter("@CuilPatient", cuilPatient + "%");
         return await ExecuteReader(query, parameters);
     }

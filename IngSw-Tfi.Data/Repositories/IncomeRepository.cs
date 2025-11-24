@@ -17,11 +17,13 @@ public class IncomeRepository : IIncomeRepository
     public async Task<Income?> GetById(int idIncome)
     {
         var incomeData = await _incomeDao.GetById(idIncome);
+        if (incomeData == null) return null;
         return MapEntity(incomeData);
     }
     public async Task<List<Income>?> GetAllEarrings()
     {
         var incomesData = await _incomeDao.GetAll();
+        if (incomesData == null) return null;
         var listIncomes = incomesData!.Select(i => MapEntity(i)).ToList();
         return listIncomes
                     .Where(i => i.IncomeStatus == IncomeStatus.EARRING)

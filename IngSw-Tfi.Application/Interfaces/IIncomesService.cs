@@ -4,7 +4,7 @@ namespace IngSw_Tfi.Application.Interfaces;
 
 public interface IIncomesService
 {
-    List<IncomeDto.Response> GetAllEarrings();
+    List<IncomeDto.ResponseTest> GetAllEarrings();
     Task<List<IncomeDto.Response>> GetById(int idIncome);
-    Task<IncomeDto.Response> AddIncome(IncomeDto.Request newIncome);
+    Task<IncomeDto.ResponseTest> AddIncome(IncomeDto.Request newIncome);
 }

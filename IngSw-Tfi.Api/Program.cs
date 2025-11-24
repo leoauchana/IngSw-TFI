@@ -1,7 +1,10 @@
 
 using IngSw_Tfi.Api.Middlewares;
+using IngSw_Tfi.Application;
 using IngSw_Tfi.Application.Interfaces;
 using IngSw_Tfi.Application.Services;
+using IngSw_Tfi.Data;
+using IngSw_Tfi.Transversal;
 
 namespace IngSw_Tfi.Api
 {
@@ -17,14 +20,13 @@ namespace IngSw_Tfi.Api
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
 
-            var app = builder.Build();
+            builder.Services.AddApplicationServices();
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+            builder.Services.AddDataServices(builder.Configuration);
+
+            builder.Services.AddTransversalServices();
+
+            var app = builder.Build();
 
             app.UseHttpsRedirection();
 
