@@ -36,4 +36,20 @@ public class PatientsController : ControllerBase
             newPatient
         });
     }
+    // Nuevo endpoint: GET /api/patients
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var list = await _patientsService.GetAll();
+        return Ok(list ?? new List<PatientDto.Response>());
+    }
+
+    // Nuevo endpoint: GET /api/patients/{id}
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var patient = await _patientsService.GetById(id);
+        if (patient == null) return NotFound();
+        return Ok(patient);
+    }
 }

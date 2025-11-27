@@ -6,4 +6,6 @@ public interface IPatientsService
 {
     Task<PatientDto.Response?> AddPatient(PatientDto.Request patientData);
     Task<List<PatientDto.Response>?> GetByCuil(string cuilPatient);
+    Task<List<PatientDto.Response>?> GetAll();
+    Task<PatientDto.Response?> GetById(int id);
 }

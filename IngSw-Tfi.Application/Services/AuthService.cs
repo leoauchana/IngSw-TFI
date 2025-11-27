@@ -5,33 +5,40 @@ using IngSw_Tfi.Domain.Entities;
 using IngSw_Tfi.Domain.Repository;
 using IngSw_Tfi.Domain.ValueObjects;
 using Org.BouncyCastle.Crypto.Generators;
+using Microsoft.Extensions.Configuration;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace IngSw_Tfi.Application.Services;
 
 public class AuthService : IAuthService
 {
     private readonly IEmployeeRepository _employeeRepository;
-    //private readonly IConfiguration _configuration;
-    public AuthService(IEmployeeRepository employeeRepository/*, IConfiguration configuration*/)
+    private readonly IConfiguration _configuration;
+    public AuthService(IEmployeeRepository employeeRepository, IConfiguration configuration)
     {
         _employeeRepository = employeeRepository;
-        // _configuration = configuration;
+        _configuration = configuration;
     }
     public async Task<UserDto.Response?> Login(UserDto.Request? userData)
     {
         if (string.IsNullOrWhiteSpace(userData!.email) || string.IsNullOrWhiteSpace(userData!.password)) throw new ArgumentException("Debe ingresar correctamente los datos");
         var employeeFound = await _employeeRepository.GetByEmail(userData.email);
         if (employeeFound == null || !VerifyPassword(userData!.password!, employeeFound.User!.Password!)) throw new EntityNotFoundException("Usuario o contraseña incorrecto.");
+        var token = TokenGenerator(employeeFound);
         return new UserDto.Response
         (
+            employeeFound.Id?.ToString() ?? string.Empty,
             employeeFound.Email!,
             employeeFound.Name!,
             employeeFound.LastName!,
-            employeeFound.Registration!,
-            employeeFound.PhoneNumber!,
+            employeeFound.Cuil?.Value ?? string.Empty,
+            employeeFound.Registration ?? string.Empty,
+            employeeFound.PhoneNumber ?? string.Empty,
             employeeFound.GetType().Name,
-            ""
-        // TokenGenerator(userFound)
+            token
         );
     }
     public async Task<UserDto.Response?> Register(UserDto.RequestRegister? userData)
@@ -88,33 +95,44 @@ public class AuthService : IAuthService
 
         return employeeRegistered != null ? new UserDto.Response
         (
+            employeeRegistered.Id?.ToString() ?? string.Empty,
             employeeRegistered.Email!,
             employeeRegistered.Name!,
             employeeRegistered.LastName!,
             employeeRegistered.Cuil!.Value!,
             employeeRegistered.Registration!,
             employeeRegistered.PhoneNumber!,
-            employeeRegistered.GetType().Name
+            employeeRegistered.GetType().Name,
+            string.Empty
         ) : null;
     }
-    //private string TokenGenerator(User user)
-    //{
-    //    var userClaims = new[]
-    //    {
-    //        new Claim(ClaimTypes.NameIdentifier, user.Employee!.Id.ToString()!),
-    //        new Claim(ClaimTypes.Name, user.Employee!.Name!),
-    //        new Claim(ClaimTypes.Role, user.Employee.GetType().Name!)
-    //    };
+    private string TokenGenerator(Employee user)
+    {
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString() ?? string.Empty),
+            new Claim(ClaimTypes.Name, user.Name ?? string.Empty),
+            new Claim(ClaimTypes.Role, user.GetType().Name ?? string.Empty)
+        };
 
-    //    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:key"]!));
-    //    var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256Signature);
+        var key = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key not configured");
+        var issuer = _configuration["Jwt:Issuer"] ?? string.Empty;
+        var audience = _configuration["Jwt:Audience"] ?? string.Empty;
+        var expiresMinutesStr = _configuration["Jwt:ExpiresMinutes"];
+        var expiresMinutes = int.TryParse(expiresMinutesStr, out var m) ? m : 60;
 
-    //    var jwtConfig = new JwtSecurityToken(
-    //        claims: userClaims,
-    //        expires: DateTime.UtcNow.AddMinutes(10),
-    //        signingCredentials: credentials
-    //        );
-    //    return new JwtSecurityTokenHandler().WriteToken(jwtConfig);
-    //}
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        var tokenDescriptor = new JwtSecurityToken(
+            issuer: issuer,
+            audience: audience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(expiresMinutes),
+            signingCredentials: credentials
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+    }
     private bool VerifyPassword(string passwordInput, string hashedPassword) => BCrypt.Net.BCrypt.Verify(passwordInput, hashedPassword);
 }

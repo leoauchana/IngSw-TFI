@@ -13,5 +13,12 @@ public class Income : EntityBase
     public string? Description { get; set; }
     public DateTime? IncomeDate { get; set; }
 
-    //TODO: Completar propiedades y determinar si aplicar patron value object.
+    // Signos vitales / métricas
+    public float? Temperature { get; set; }
+    public float? FrequencyCardiac { get; set; }
+    public float? FrequencyRespiratory { get; set; }
+    public float? SystolicRate { get; set; }
+    public float? DiastolicRate { get; set; }
+
+    // TODO: Completar propiedades y determinar si aplicar patron value object.
 }

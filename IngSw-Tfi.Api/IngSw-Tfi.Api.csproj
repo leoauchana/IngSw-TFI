@@ -9,10 +9,12 @@
 
   <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\IngSw-Tfi.Application\IngSw-Tfi.Application.csproj" />
+    <ProjectReference Include="..\IngSw-Tfi.Transversal\IngSw-Tfi.Transversal.csproj" />
   </ItemGroup>
 
 </Project>

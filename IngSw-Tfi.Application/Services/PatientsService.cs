@@ -67,8 +67,9 @@ public class PatientsService : IPatientsService
             },
             Affiliate = affiliation
         };
+        newPatient.Id = Guid.NewGuid();
         await _patientRepository.AddPatient(newPatient);
-        return new PatientDto.Response(newPatient.Cuil.Value!, newPatient.Name!, newPatient.LastName!, newPatient.Email!,
+        return new PatientDto.Response(newPatient.Id.Value, newPatient.Cuil.Value!, newPatient.Name!, newPatient.LastName!, newPatient.Email!,
                     newPatient.Domicilie!.Street!, newPatient.Domicilie.Number, newPatient.Domicilie.Locality!);
     }
     public async Task<List<PatientDto.Response>?> GetByCuil(string cuilPatient)
@@ -77,8 +78,23 @@ public class PatientsService : IPatientsService
         var patientsFounds = await _patientRepository.GetByCuil(cuilPatient);
         if (patientsFounds == null || !(patientsFounds.Count > 0))
             throw new NullException($"No hay pacientes que coincidan con el cuil {cuilPatient} registrados.");
-        return patientsFounds.Select(pr => new PatientDto.Response(pr.Cuil!.Value!, pr.Name!, pr.LastName!,
+        return patientsFounds.Select(pr => new PatientDto.Response(pr.Id ?? Guid.Empty, pr.Cuil!.Value!, pr.Name!, pr.LastName!,
                     pr.Email!, pr.Domicilie!.Street!, pr.Domicilie.Number, pr.Domicilie.Locality!))
                     .ToList();
+    }
+    public async Task<List<PatientDto.Response>?> GetAll()
+    {
+        var patients = await _patientRepository.GetAll();
+        if (patients == null || patients.Count == 0) return new List<PatientDto.Response>();
+        return patients.Select(p => new PatientDto.Response(p.Id ?? Guid.Empty, p.Cuil?.Value ?? string.Empty, p.Name ?? string.Empty, p.LastName ?? string.Empty,
+            p.Email ?? string.Empty, p.Domicilie?.Street ?? string.Empty, p.Domicilie?.Number ?? 0, p.Domicilie?.Locality ?? string.Empty)).ToList();
+    }
+
+    public async Task<PatientDto.Response?> GetById(int id)
+    {
+        var patient = await _patientRepository.GetById(id);
+        if (patient == null) return null;
+        return new PatientDto.Response(patient.Id ?? Guid.Empty, patient.Cuil?.Value ?? string.Empty, patient.Name ?? string.Empty, patient.LastName ?? string.Empty,
+            patient.Email ?? string.Empty, patient.Domicilie?.Street ?? string.Empty, patient.Domicilie?.Number ?? 0, patient.Domicilie?.Locality ?? string.Empty);
     }
 }

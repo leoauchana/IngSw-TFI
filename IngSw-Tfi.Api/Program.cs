@@ -2,6 +2,11 @@
 using IngSw_Tfi.Api.Middlewares;
 using IngSw_Tfi.Application.Interfaces;
 using IngSw_Tfi.Application.Services;
+using IngSw_Tfi.Application;
+using IngSw_Tfi.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace IngSw_Tfi.Api
 {
@@ -14,8 +19,59 @@ namespace IngSw_Tfi.Api
             // Add services to the container.
 
             builder.Services.AddControllers();
+            // Register data and application layer services
+            // Data services register repositories and DB connection
+            builder.Services.AddDataServices(builder.Configuration);
+            // Application services (IAuthService, IPatientsService, IIncomesService)
+            builder.Services.AddApplicationServices();
+            // Transversal / external services
+            // Register SocialWorkServiceApi as the implementation of ISocialWorkServiceApi
+            builder.Services.AddScoped<IngSw_Tfi.Domain.Interfaces.ISocialWorkServiceApi, IngSw_Tfi.Transversal.Services.SocialWorkServiceApi>();
+
+            // JWT Authentication
+            var jwtKey = builder.Configuration["Jwt:Key"];
+            var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+            var jwtAudience = builder.Configuration["Jwt:Audience"];
+            if (!string.IsNullOrEmpty(jwtKey))
+            {
+                builder.Services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                }).AddJwtBearer(options =>
+                {
+                    options.RequireHttpsMetadata = false;
+                    options.SaveToken = true;
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                        ValidateIssuer = true,
+                        ValidIssuer = jwtIssuer,
+                        ValidateAudience = true,
+                        ValidAudience = jwtAudience,
+                        ValidateLifetime = true,
+                        ClockSkew = TimeSpan.Zero
+                    };
+                });
+            }
+
+            // CORS (allow frontend origin configured in appsettings)
+            var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? new[] { "http://localhost:5173" };
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend", policy =>
+                {
+                    policy.WithOrigins(allowedOrigins)
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                });
+            });
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
@@ -28,11 +84,15 @@ namespace IngSw_Tfi.Api
 
             app.UseHttpsRedirection();
 
+            app.UseCors("AllowFrontend");
+
             app.UseAuthentication();
 
             app.UseAuthorization();
 
             app.UseMiddleware<ExceptionMiddleware>();
+
+            app.MapControllers();
 
             app.MapControllers();
 

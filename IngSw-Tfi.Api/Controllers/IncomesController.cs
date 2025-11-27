@@ -13,29 +13,29 @@ public class IncomesController : ControllerBase
     {
         _incomesService = incomesService;
     }
-    [HttpGet("getAllEarrings")]
-    public async Task<IActionResult> GetAllEarrings()
+    // GET /api/incomes
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
     {
-        var listIncomes = await _incomesService.GetAllEarrings();
-        return Ok(new
-        {
-            Message = "Ingresos pendientes",
-            listIncomes
-        });
+        var listIncomes = await _incomesService.GetAll();
+        return Ok(listIncomes ?? new List<IncomeDto.Response>());
     }
-    [HttpGet("getById{idIncome}")]
-    public async Task<IActionResult> GetById(int idIncome)
+
+    // GET /api/incomes/{id}
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
     {
-        var incomeFound = await _incomesService.GetById(idIncome);
-        return Ok(new
-        {
-            Message= "Ingreso encontrado",
-            incomeFound
-        });
+        var incomeFound = await _incomesService.GetById(id);
+        if (incomeFound == null) return NotFound();
+        return Ok(incomeFound);
     }
+
+    // POST /api/incomes
+    [HttpPost]
     public async Task<IActionResult> AddIncome([FromBody] IncomeDto.Request newIncome)
     {
         var incomeRegistered = await _incomesService.AddIncome(newIncome);
+        if (incomeRegistered == null) return BadRequest();
         return Ok(new
         {
             Message = "Ingreso registrado con éxito",
