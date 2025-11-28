@@ -19,6 +19,14 @@ namespace IngSw_Tfi.Api
             // Add services to the container.
 
             builder.Services.AddControllers();
+            
+            // Configurar rutas como case-insensitive para evitar errores 404
+            builder.Services.Configure<RouteOptions>(options =>
+            {
+                options.LowercaseUrls = true;
+                options.LowercaseQueryStrings = false;
+            });
+            
             // Register data and application layer services
             // Data services register repositories and DB connection
             builder.Services.AddDataServices(builder.Configuration);
