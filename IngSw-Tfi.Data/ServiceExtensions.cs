@@ -19,6 +19,7 @@ public static class ServiceExtensions
         services.AddScoped<IncomeDao>();
         services.AddScoped<PatientDao>();
         services.AddScoped<EmployeeDao>();
+        services.AddScoped<HealthInsuranceDao>();
         // Employee repository (used by AuthService) - basic implementation exists
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
     }
