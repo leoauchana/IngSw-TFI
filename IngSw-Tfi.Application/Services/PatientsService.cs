@@ -35,7 +35,7 @@ public class PatientsService : IPatientsService
             if (string.IsNullOrWhiteSpace(Convert.ToString(campo.Value)))
                 throw new ArgumentException($"El campo '{campo.Key}' no puede ser omitido.");
         }
-        if (patientData.numberDomicilie <= 0 || patientData.numberDomicilie > 9999)
+        if (patientData.numberDomicilie <= 0 || patientData.numberDomicilie > 999999)
             throw new ArgumentException("El campo 'Número' no puede ser omitido o exceder el límite permitido.");
 
         Affiliate? affiliation = null;
@@ -59,6 +59,8 @@ public class PatientsService : IPatientsService
             Name = patientData.namePatient,
             LastName = patientData.lastNamePatient,
             Email = patientData.email,
+            BirthDate = patientData.birthDate,
+            Phone = patientData.phone,
             Domicilie = new Domicilie
             {
                 Number = patientData.numberDomicilie,
@@ -69,8 +71,12 @@ public class PatientsService : IPatientsService
         };
         newPatient.Id = Guid.NewGuid();
         await _patientRepository.AddPatient(newPatient);
+        
+        Console.WriteLine($"🔍 DEBUG: newPatient.BirthDate = {newPatient.BirthDate}");
+        Console.WriteLine($"🔍 DEBUG: newPatient.Phone = {newPatient.Phone}");
+        
         return new PatientDto.Response(newPatient.Id.Value, newPatient.Cuil.Value!, newPatient.Name!, newPatient.LastName!, newPatient.Email!,
-                    newPatient.Domicilie!.Street!, newPatient.Domicilie.Number, newPatient.Domicilie.Locality!);
+                    newPatient.BirthDate, newPatient.Phone, newPatient.Domicilie!.Street!, newPatient.Domicilie.Number, newPatient.Domicilie.Locality!);
     }
     public async Task<List<PatientDto.Response>?> GetByCuil(string cuilPatient)
     {
@@ -79,7 +85,7 @@ public class PatientsService : IPatientsService
         if (patientsFounds == null || !(patientsFounds.Count > 0))
             throw new NullException($"No hay pacientes que coincidan con el cuil {cuilPatient} registrados.");
         return patientsFounds.Select(pr => new PatientDto.Response(pr.Id ?? Guid.Empty, pr.Cuil!.Value!, pr.Name!, pr.LastName!,
-                    pr.Email!, pr.Domicilie!.Street!, pr.Domicilie.Number, pr.Domicilie.Locality!))
+                    pr.Email!, pr.BirthDate, pr.Phone, pr.Domicilie!.Street!, pr.Domicilie.Number, pr.Domicilie.Locality!))
                     .ToList();
     }
     public async Task<List<PatientDto.Response>?> GetAll()
@@ -87,7 +93,7 @@ public class PatientsService : IPatientsService
         var patients = await _patientRepository.GetAll();
         if (patients == null || patients.Count == 0) return new List<PatientDto.Response>();
         return patients.Select(p => new PatientDto.Response(p.Id ?? Guid.Empty, p.Cuil?.Value ?? string.Empty, p.Name ?? string.Empty, p.LastName ?? string.Empty,
-            p.Email ?? string.Empty, p.Domicilie?.Street ?? string.Empty, p.Domicilie?.Number ?? 0, p.Domicilie?.Locality ?? string.Empty)).ToList();
+            p.Email ?? string.Empty, p.BirthDate, p.Phone, p.Domicilie?.Street ?? string.Empty, p.Domicilie?.Number ?? 0, p.Domicilie?.Locality ?? string.Empty)).ToList();
     }
 
     public async Task<PatientDto.Response?> GetById(int id)
@@ -95,6 +101,6 @@ public class PatientsService : IPatientsService
         var patient = await _patientRepository.GetById(id);
         if (patient == null) return null;
         return new PatientDto.Response(patient.Id ?? Guid.Empty, patient.Cuil?.Value ?? string.Empty, patient.Name ?? string.Empty, patient.LastName ?? string.Empty,
-            patient.Email ?? string.Empty, patient.Domicilie?.Street ?? string.Empty, patient.Domicilie?.Number ?? 0, patient.Domicilie?.Locality ?? string.Empty);
+            patient.Email ?? string.Empty, patient.BirthDate, patient.Phone, patient.Domicilie?.Street ?? string.Empty, patient.Domicilie?.Number ?? 0, patient.Domicilie?.Locality ?? string.Empty);
     }
 }

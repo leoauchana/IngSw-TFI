@@ -70,6 +70,11 @@ public class PatientRepository : IPatientRepository
             Name = reader.ContainsKey("first_name") ? reader["first_name"]?.ToString() : reader.GetValueOrDefault("name")?.ToString(),
             LastName = reader.ContainsKey("last_name") ? reader["last_name"]?.ToString() : reader.GetValueOrDefault("last_name")?.ToString(),
             Cuil = reader.ContainsKey("patient_cuil") && reader["patient_cuil"] != null ? Cuil.Create(reader["patient_cuil"]?.ToString()) : null,
+            Email = reader.ContainsKey("email") ? reader["email"]?.ToString() : string.Empty,
+            Phone = reader.ContainsKey("phone") && reader["phone"] != DBNull.Value ? reader["phone"]?.ToString() : null,
+            BirthDate = reader.ContainsKey("birth_date") && reader["birth_date"] != DBNull.Value 
+                ? Convert.ToDateTime(reader["birth_date"]) 
+                : DateTime.MinValue,
             Domicilie = new Domicilie
             {
                 Street = reader.ContainsKey("street_address") ? reader["street_address"]?.ToString() : reader.GetValueOrDefault("street_domicilie")?.ToString(),

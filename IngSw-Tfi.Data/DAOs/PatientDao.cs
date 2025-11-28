@@ -12,8 +12,8 @@ public class PatientDao : DaoBase
     public async Task AddPatient(Patient newPatient)
     {
         var query = """
-            INSERT INTO patient (id_patient, health_insurance_id, patient_cuil, first_name, last_name, email, street_address, number_address, town_address) 
-            VALUES (@Id, @HealthInsuranceId, @Cuil, @FirstName, @LastName, @Email, @Street, @Number, @Locality)
+            INSERT INTO patient (id_patient, health_insurance_id, patient_cuil, first_name, last_name, email, phone, birth_date, street_address, number_address, town_address) 
+            VALUES (@Id, @HealthInsuranceId, @Cuil, @FirstName, @LastName, @Email, @Phone, @BirthDate, @Street, @Number, @Locality)
             """;
         var parameters = new[]{
             new MySqlParameter("@Id", newPatient.Id?.ToString() ?? Guid.NewGuid().ToString()),
@@ -22,6 +22,8 @@ public class PatientDao : DaoBase
             new MySqlParameter("@FirstName", newPatient.Name ?? string.Empty),
             new MySqlParameter("@LastName", newPatient.LastName ?? string.Empty),
             new MySqlParameter("@Email", newPatient.Email ?? string.Empty),
+            new MySqlParameter("@Phone", (object?)newPatient.Phone ?? DBNull.Value),
+            new MySqlParameter("@BirthDate", newPatient.BirthDate),
             new MySqlParameter("@Street", newPatient.Domicilie!.Street),
             new MySqlParameter("@Number", newPatient.Domicilie.Number),
             new MySqlParameter("@Locality", newPatient.Domicilie.Locality)
@@ -65,8 +67,8 @@ public class PatientDao : DaoBase
     public async Task AddPatient(Patient newPatient, System.Data.IDbConnection conn, System.Data.IDbTransaction? tx)
     {
         var query = """
-            INSERT INTO patient (id_patient, health_insurance_id, patient_cuil, first_name, last_name, email, street_address, number_address, town_address) 
-            VALUES (@Id, @HealthInsuranceId, @Cuil, @FirstName, @LastName, @Email, @Street, @Number, @Locality)
+            INSERT INTO patient (id_patient, health_insurance_id, patient_cuil, first_name, last_name, email, phone, birth_date, street_address, number_address, town_address) 
+            VALUES (@Id, @HealthInsuranceId, @Cuil, @FirstName, @LastName, @Email, @Phone, @BirthDate, @Street, @Number, @Locality)
             """;
         var parameters = new[]{
             new MySqlParameter("@Id", newPatient.Id?.ToString() ?? Guid.NewGuid().ToString()),
@@ -75,6 +77,8 @@ public class PatientDao : DaoBase
             new MySqlParameter("@FirstName", newPatient.Name ?? string.Empty),
             new MySqlParameter("@LastName", newPatient.LastName ?? string.Empty),
             new MySqlParameter("@Email", newPatient.Email ?? string.Empty),
+            new MySqlParameter("@Phone", (object?)newPatient.Phone ?? DBNull.Value),
+            new MySqlParameter("@BirthDate", newPatient.BirthDate),
             new MySqlParameter("@Street", newPatient.Domicilie!.Street),
             new MySqlParameter("@Number", newPatient.Domicilie.Number),
             new MySqlParameter("@Locality", newPatient.Domicilie.Locality)
