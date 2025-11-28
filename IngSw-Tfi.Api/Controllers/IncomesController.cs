@@ -42,4 +42,22 @@ public class IncomesController : ControllerBase
             incomeRegistered
         });
     }
+
+    // PUT /api/incomes/{id}
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateIncomeStatus(string id, [FromBody] UpdateStatusRequest request)
+    {
+        try
+        {
+            var result = await _incomesService.UpdateIncomeStatus(id, request.estado);
+            if (result == null) return NotFound(new { Message = "Ingreso no encontrado" });
+            return Ok(new { Message = "Estado actualizado correctamente", data = result });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
+    }
+
+    public record UpdateStatusRequest(string estado);
 }

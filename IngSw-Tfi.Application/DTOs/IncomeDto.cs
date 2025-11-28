@@ -16,6 +16,23 @@ public class IncomeDto
         JsonElement patient,
         JsonElement nurse
     );
-    // Response contiene el DTO anidado de paciente (PatientDto.Response)
-    public record Response(PatientDto.Response patient);
+    // Response contiene el DTO anidado de paciente y datos de la admisión
+    public record Response(
+        string id,
+        PatientDto.Response paciente,
+        DateTime fechaIngreso,
+        EmergencyLevelDto nivelEmergencia,
+        StatusDto estado,
+        float? temperature,
+        float? heartRate,
+        float? respiratoryRate,
+        float? systolicRate,
+        float? diastolicRate,
+        string? report,
+        NurseDto? enfermera
+    );
+
+    public record EmergencyLevelDto(int id, string label);
+    public record StatusDto(string id, string label);
+    public record NurseDto(string id, string nombre, string apellido, string? matricula);
 }

@@ -10,10 +10,12 @@ public class IncomeDao : DaoBase
     public async Task<Dictionary<string, object>?> GetById(int idIncome)
     {
         var query = """
-            SELECT a.*, p.*, h.*
+            SELECT a.*, p.*, h.*, 
+                   n.id_nurse as nurse_id, n.first_name as nurse_name, n.last_name as nurse_lastname, n.dni as nurse_dni
             FROM admission a
             LEFT JOIN patient p ON a.patient_id_patient = p.id_patient
             LEFT JOIN health_insurance h ON p.health_insurance_id = h.id_health_insurance
+            LEFT JOIN nurse n ON a.nurse_id_nurse = n.id_nurse
             WHERE a.id_admission = @IdIncome
             LIMIT 1;
             """;
@@ -24,10 +26,12 @@ public class IncomeDao : DaoBase
     public async Task<List<Dictionary<string, object>>> GetAll()
     {
         var query = """
-            SELECT a.*, p.*, h.*
+            SELECT a.*, p.*, h.*, 
+                   n.id_nurse as nurse_id, n.first_name as nurse_name, n.last_name as nurse_lastname, n.dni as nurse_dni
             FROM admission a
             LEFT JOIN patient p ON a.patient_id_patient = p.id_patient
-            LEFT JOIN health_insurance h ON p.health_insurance_id = h.id_health_insurance;
+            LEFT JOIN health_insurance h ON p.health_insurance_id = h.id_health_insurance
+            LEFT JOIN nurse n ON a.nurse_id_nurse = n.id_nurse;
             """;
         return await ExecuteReader(query);
     }
@@ -69,8 +73,12 @@ public class IncomeDao : DaoBase
         var id = Guid.NewGuid().ToString();
         var patientIdParam = newIncome.Patient?.Id?.ToString();
         var nurseIdParam = newIncome.Nurse?.Id?.ToString();
-        var startDate = DateTime.UtcNow.Date;
-        var endDateTime = DateTime.UtcNow;
+        
+        // Usar zona horaria de Argentina (UTC-3)
+        var argentinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Argentina/Buenos_Aires");
+        var startDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, argentinaTimeZone);
+        var endDateTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, argentinaTimeZone);
+        
         var level = newIncome.EmergencyLevel.HasValue ? ((int)newIncome.EmergencyLevel.Value + 1) : 1;
         var status = (int?)(newIncome.IncomeStatus.HasValue ? (int)newIncome.IncomeStatus.Value : 0) ?? 0;
 
@@ -109,5 +117,16 @@ public class IncomeDao : DaoBase
         var paramsSql = string.Join(", ", insertParams);
         var sql = $"INSERT INTO admission ({columnsSql}) VALUES ({paramsSql})";
         await ExecuteNonQuery(sql, conn, tx, parametersList.ToArray());
+    }
+
+    public async Task UpdateIncomeStatus(string idAdmission, int newStatus)
+    {
+        var sql = "UPDATE admission SET status = @Status WHERE id_admission = @Id";
+        var parameters = new[]
+        {
+            new MySqlParameter("@Status", newStatus),
+            new MySqlParameter("@Id", idAdmission)
+        };
+        await ExecuteNonQuery(sql, parameters);
     }
 }

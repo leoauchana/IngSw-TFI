@@ -8,4 +8,5 @@ public interface IIncomesService
     Task<IncomeDto.Response?> GetById(int idIncome);
     Task<IncomeDto.Response?> AddIncome(IncomeDto.Request newIncome);
     Task<List<IncomeDto.Response>?> GetAll();
+    Task<IncomeDto.Response?> UpdateIncomeStatus(string incomeId, string newStatus);
 }

@@ -21,11 +21,15 @@ public class IncomesService : IIncomesService
 
     public Task<IncomeDto.Response?> AddIncome(IncomeDto.Request newIncome)
     {
+        // Usar zona horaria de Argentina (UTC-3)
+        var argentinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Argentina/Buenos_Aires");
+        var argentinaTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, argentinaTimeZone);
+        
         var income = new Income
         {
             Description = newIncome.report,
             EmergencyLevel = newIncome.emergencyLevel,
-            IncomeDate = DateTime.UtcNow,
+            IncomeDate = argentinaTime,
             Temperature = newIncome.temperature,
             FrequencyCardiac = newIncome.frecyencyCardiac,
             FrequencyRespiratory = newIncome.frecuencyRespiratory,
@@ -96,17 +100,36 @@ public class IncomesService : IIncomesService
                 }
 
                 // Resolve nurse if provided
+                // Resolve nurse if provided
                 if (newIncome.nurse.ValueKind != System.Text.Json.JsonValueKind.Undefined && newIncome.nurse.ValueKind != System.Text.Json.JsonValueKind.Null)
                 {
                     var n = newIncome.nurse;
-                    if (n.TryGetProperty("id", out var nid) && nid.ValueKind == System.Text.Json.JsonValueKind.String)
+                    string? idStr = null;
+
+                    if (n.ValueKind == System.Text.Json.JsonValueKind.String)
                     {
-                        var idStr = nid.GetString();
-                        if (!string.IsNullOrEmpty(idStr))
-                        {
-                            income.Nurse = new Domain.Entities.Nurse { Id = Guid.TryParse(idStr, out var g) ? g : Guid.NewGuid() };
-                        }
+                        idStr = n.GetString();
                     }
+                    else if (n.TryGetProperty("id", out var nid) && nid.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        idStr = nid.GetString();
+                    }
+
+                    Console.WriteLine($"🔍 DEBUG: Nurse ID from request: {idStr}");
+
+                    if (!string.IsNullOrEmpty(idStr) && Guid.TryParse(idStr, out var g))
+                    {
+                        income.Nurse = new Domain.Entities.Nurse { Id = g };
+                        Console.WriteLine($"✅ DEBUG: Nurse assigned to income: {g}");
+                    }
+                    else
+                    {
+                        Console.WriteLine("⚠️ DEBUG: Could not parse Nurse ID or it was empty");
+                    }
+                }
+                else 
+                {
+                    Console.WriteLine("⚠️ DEBUG: newIncome.nurse is Undefined or Null");
                 }
 
                 // Use a single DB connection + transaction for create patient (if needed) + insert income
@@ -154,6 +177,21 @@ public class IncomesService : IIncomesService
                                 income.Patient = newPatient;
                             }
 
+                            // Validar que el paciente no tenga ya un ingreso activo
+                            if (income.Patient != null)
+                            {
+                                var existingActiveIncomes = await _incomeRepository.GetAllEarrings();
+                                var hasActiveIncome = existingActiveIncomes?.Any(i => 
+                                    i.Patient?.Id == income.Patient.Id && 
+                                    (i.IncomeStatus == null || i.IncomeStatus == Domain.Enums.IncomeStatus.EARRING || i.IncomeStatus == Domain.Enums.IncomeStatus.IN_PROCESS)
+                                ) ?? false;
+
+                                if (hasActiveIncome)
+                                {
+                                    throw new BusinessConflicException($"El paciente {income.Patient.Name} {income.Patient.LastName} ya tiene un ingreso activo en la cola de espera. No puede agregarse nuevamente hasta que sea atendido.");
+                                }
+                            }
+
                             // Insert income using same connection/transaction
                             await ((IngSw_Tfi.Data.Repositories.IncomeRepository)_incomeRepository).Add(income, conn, tx);
 
@@ -166,8 +204,7 @@ public class IncomesService : IIncomesService
                         }
                     }
                 }
-                var emptyPatient = new PatientDto.Response(income.Patient?.Id ?? Guid.Empty, income.Patient?.Cuil?.Value ?? string.Empty, income.Patient?.Name ?? string.Empty, income.Patient?.LastName ?? string.Empty, income.Patient?.Email ?? string.Empty, income.Patient?.Domicilie?.Street ?? string.Empty, income.Patient?.Domicilie?.Number ?? 0, income.Patient?.Domicilie?.Locality ?? string.Empty);
-                return new IncomeDto.Response(emptyPatient);
+                return MapToDto(income);
             }
             catch (Exception ex)
             {
@@ -182,32 +219,134 @@ public class IncomesService : IIncomesService
     {
         var incomesEarrings = await _incomeRepository.GetAllEarrings();
         if (incomesEarrings == null || incomesEarrings.Count == 0) return new List<IncomeDto.Response>();
-        var result = incomesEarrings.Select(i =>
-        {
-            var patientDto = new PatientDto.Response(i.Patient?.Id ?? Guid.Empty, i.Patient?.Cuil?.Value ?? string.Empty, i.Patient?.Name ?? string.Empty, i.Patient?.LastName ?? string.Empty,
-                i.Patient?.Email ?? string.Empty, i.Patient?.Domicilie?.Street ?? string.Empty, i.Patient?.Domicilie?.Number ?? 0, i.Patient?.Domicilie?.Locality ?? string.Empty);
-            return new IncomeDto.Response(patientDto);
-        }).ToList();
-        return result;
+        return incomesEarrings.Select(MapToDto).ToList();
     }
 
     public async Task<IncomeDto.Response?> GetById(int idIncome)
     {
         var income = await _incomeRepository.GetById(idIncome);
         if (income == null) return null;
-        var patientDto = new PatientDto.Response(income.Patient?.Id ?? Guid.Empty, income.Patient?.Cuil?.Value ?? string.Empty, income.Patient?.Name ?? string.Empty, income.Patient?.LastName ?? string.Empty,
-            income.Patient?.Email ?? string.Empty, income.Patient?.Domicilie?.Street ?? string.Empty, income.Patient?.Domicilie?.Number ?? 0, income.Patient?.Domicilie?.Locality ?? string.Empty);
-        return new IncomeDto.Response(patientDto);
+        return MapToDto(income);
     }
+
     public async Task<List<IncomeDto.Response>?> GetAll()
     {
-        var incomes = await _incomeRepository.GetAllEarrings();
+        var incomes = await _incomeRepository.GetAll(); // Asumo que GetAllEarrings trae todo o debería haber un GetAll real. El controller llama a GetAll.
+        // Nota: IncomeRepository parece tener solo GetAllEarrings implementado en la interfaz?
+        // Si GetAll debe traer todo (incluyendo finalizados), deberíamos usar otro método del repo.
+        // Por ahora usaré GetAllEarrings como estaba antes.
         if (incomes == null || incomes.Count == 0) return new List<IncomeDto.Response>();
-        return incomes.Select(i =>
+        return incomes.Select(MapToDto).ToList();
+    }
+
+    private IncomeDto.Response MapToDto(Income income)
+    {
+        var patientDto = new PatientDto.Response(
+            income.Patient?.Id ?? Guid.Empty,
+            income.Patient?.Cuil?.Value ?? string.Empty,
+            income.Patient?.Name ?? string.Empty,
+            income.Patient?.LastName ?? string.Empty,
+            income.Patient?.Email ?? string.Empty,
+            income.Patient?.BirthDate ?? DateTime.MinValue,
+            income.Patient?.Phone,
+            income.Patient?.Domicilie?.Street ?? string.Empty,
+            income.Patient?.Domicilie?.Number ?? 0,
+            income.Patient?.Domicilie?.Locality ?? string.Empty
+        );
+
+        // Mapear Nivel de Emergencia (0-4 a 1-5 para frontend)
+        var levelId = (int)income.EmergencyLevel + 1;
+        var levelLabel = income.EmergencyLevel switch
         {
-            var patientDto = new PatientDto.Response(i.Patient?.Id ?? Guid.Empty, i.Patient?.Cuil?.Value ?? string.Empty, i.Patient?.Name ?? string.Empty, i.Patient?.LastName ?? string.Empty,
-                i.Patient?.Email ?? string.Empty, i.Patient?.Domicilie?.Street ?? string.Empty, i.Patient?.Domicilie?.Number ?? 0, i.Patient?.Domicilie?.Locality ?? string.Empty);
-            return new IncomeDto.Response(patientDto);
-        }).ToList();
+            Domain.Enums.EmergencyLevel.CRITICAL => "Crítica",
+            Domain.Enums.EmergencyLevel.EMERGENCY => "Emergencia",
+            Domain.Enums.EmergencyLevel.URGENCY => "Urgencia",
+            Domain.Enums.EmergencyLevel.URGENCY_MINOR => "Urgencia menor",
+            Domain.Enums.EmergencyLevel.WITHOUT_URGENCY => "Sin urgencia",
+            _ => "Desconocido"
+        };
+
+        // Mapear Estado
+        // Si IncomeStatus es null, asumimos PENDIENTE (EARRING)
+        var status = income.IncomeStatus ?? Domain.Enums.IncomeStatus.EARRING;
+        
+        var statusId = status switch
+        {
+            Domain.Enums.IncomeStatus.EARRING => "PENDIENTE",
+            Domain.Enums.IncomeStatus.IN_PROCESS => "EN_PROCESO",
+            Domain.Enums.IncomeStatus.FINISHED => "FINALIZADO",
+            _ => "PENDIENTE"
+        };
+        var statusLabel = status switch
+        {
+            Domain.Enums.IncomeStatus.EARRING => "Pendiente",
+            Domain.Enums.IncomeStatus.IN_PROCESS => "En Proceso",
+            Domain.Enums.IncomeStatus.FINISHED => "Finalizado",
+            _ => "Pendiente"
+        };
+
+        // Mapear información de la enfermera
+        IncomeDto.NurseDto? nurseDto = null;
+        if (income.Nurse != null)
+        {
+            nurseDto = new IncomeDto.NurseDto(
+                income.Nurse.Id?.ToString() ?? string.Empty,
+                income.Nurse.Name ?? string.Empty,
+                income.Nurse.LastName ?? string.Empty,
+                income.Nurse.Registration
+            );
+        }
+
+        return new IncomeDto.Response(
+            income.Id.ToString(),
+            patientDto,
+            income.IncomeDate ?? DateTime.MinValue,
+            new IncomeDto.EmergencyLevelDto(levelId, levelLabel),
+            new IncomeDto.StatusDto(statusId, statusLabel),
+            income.Temperature,
+            income.FrequencyCardiac,
+            income.FrequencyRespiratory,
+            income.SystolicRate,
+            income.DiastolicRate,
+            income.Description,
+            nurseDto
+        );
+    }
+
+    public async Task<IncomeDto.Response?> UpdateIncomeStatus(string incomeId, string newStatus)
+    {
+        // Parse income ID (assuming it's a Guid in string format)
+        if (!Guid.TryParse(incomeId, out var guid))
+        {
+            throw new ArgumentException("ID de ingreso inválido");
+        }
+
+        // Get income from repository
+        // Note: IIncomeRepository doesn't have GetByGuid, so we need to use GetAll and filter
+        // In a production system, this should be optimized with a proper GetById method
+        var allIncomes = await _incomeRepository.GetAll();
+        var income = allIncomes?.FirstOrDefault(i => i.Id == guid);
+
+        if (income == null)
+        {
+            return null;
+        }
+
+        // Map string status to enum
+        Domain.Enums.IncomeStatus status = newStatus switch
+        {
+            "PENDIENTE" => Domain.Enums.IncomeStatus.EARRING,
+            "EN_PROCESO" => Domain.Enums.IncomeStatus.IN_PROCESS,
+            "FINALIZADO" => Domain.Enums.IncomeStatus.FINISHED,
+            _ => throw new ArgumentException($"Estado '{newStatus}' no válido")
+        };
+
+        // Update status
+        income.IncomeStatus = status;
+
+        // Save changes to database
+        await _incomeRepository.UpdateStatus(income.Id ?? Guid.Empty, status);
+
+        return MapToDto(income);
     }
 }
