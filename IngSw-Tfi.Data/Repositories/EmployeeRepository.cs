@@ -18,10 +18,35 @@ public class EmployeeRepository : IEmployeeRepository
         var record = await _employeeDao.GetByEmail(userEmail);
         if (record == null) return null;
 
-        var employee = new Employee();
+        var idNurse = record.GetValueOrDefault("id_nurse");
+        var idDoctor = record.GetValueOrDefault("id_doctor");
+        
+        Employee employee;
+        string? targetId = null;
 
-        if (record.TryGetValue("idusuario", out var idObj) && Guid.TryParse(Convert.ToString(idObj), out var guid))
+        if (idNurse != null && !string.IsNullOrEmpty(idNurse.ToString()))
+        {
+            employee = new Nurse();
+            targetId = idNurse.ToString();
+        }
+        else if (idDoctor != null && !string.IsNullOrEmpty(idDoctor.ToString()))
+        {
+            employee = new Doctor();
+            targetId = idDoctor.ToString();
+        }
+        else
+        {
+            employee = new Employee();
+            if (record.TryGetValue("idusuario", out var idObj))
+            {
+                targetId = idObj?.ToString();
+            }
+        }
+
+        if (targetId != null && Guid.TryParse(targetId, out var guid))
+        {
             employee.Id = guid;
+        }
 
         employee.Email = Convert.ToString(record.GetValueOrDefault("email"));
 

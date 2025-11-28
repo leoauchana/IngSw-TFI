@@ -37,7 +37,7 @@ public class AuthService : IAuthService
             employeeFound.Cuil?.Value ?? string.Empty,
             employeeFound.Registration ?? string.Empty,
             employeeFound.PhoneNumber ?? string.Empty,
-            employeeFound.GetType().Name,
+            GetRoleName(employeeFound),
             token
         );
     }
@@ -102,7 +102,7 @@ public class AuthService : IAuthService
             employeeRegistered.Cuil!.Value!,
             employeeRegistered.Registration!,
             employeeRegistered.PhoneNumber!,
-            employeeRegistered.GetType().Name,
+            GetRoleName(employeeRegistered),
             string.Empty
         ) : null;
     }
@@ -135,4 +135,14 @@ public class AuthService : IAuthService
         return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
     }
     private bool VerifyPassword(string passwordInput, string hashedPassword) => BCrypt.Net.BCrypt.Verify(passwordInput, hashedPassword);
+    
+    private string GetRoleName(Employee employee)
+    {
+        return employee switch
+        {
+            Doctor => "Doctor",
+            Nurse => "Enfermera",
+            _ => employee.GetType().Name
+        };
+    }
 }
