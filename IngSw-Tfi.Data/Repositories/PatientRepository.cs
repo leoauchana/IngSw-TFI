@@ -2,6 +2,7 @@
 using IngSw_Tfi.Domain.Entities;
 using IngSw_Tfi.Domain.Repository;
 using IngSw_Tfi.Domain.ValueObjects;
+using System.Collections.Generic;
 
 namespace IngSw_Tfi.Data.Repositories;
 
@@ -12,19 +13,19 @@ public class PatientRepository : IPatientRepository
     {
         _patientDao = patientDao;
     }
+
     // Repository helper to add patient within an existing connection/transaction
     public Task AddPatient(Patient newPatient, System.Data.IDbConnection conn, System.Data.IDbTransaction? tx)
     {
         return _patientDao.AddPatient(newPatient, conn, tx);
     }
-    public Task<List<Patient>?> GetAll()
+
+    public async Task<List<Patient>?> GetAll()
     {
-        return Task.Run(async () =>
-        {
-            var data = await _patientDao.GetAll();
-            return data?.Select(d => MapEntity(d)).ToList();
-        });
+        var data = await _patientDao.GetAll();
+        return data?.Select(d => MapEntity(d)).ToList();
     }
+
     public async Task<List<Patient>?> GetByCuil(string cuilPatient)
     {
         var patientsFound = await _patientDao.GetByCuil(cuilPatient);
@@ -62,7 +63,7 @@ public class PatientRepository : IPatientRepository
         // Delegate to DAO transactional method
         await _patientDao.AddPatient(newPatient, conn, tx);
     }
-    private Patient MapEntity(Dictionary<string, object>? reader)
+    private Patient MapEntity(Dictionary<string, object> reader)
     {
         return new Patient
         {

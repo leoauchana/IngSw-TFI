@@ -13,12 +13,25 @@ public class IncomesController : ControllerBase
     {
         _incomesService = incomesService;
     }
+
     // GET /api/incomes
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
         var listIncomes = await _incomesService.GetAll();
         return Ok(listIncomes ?? new List<IncomeDto.Response>());
+    }
+
+    [HttpGet("getAllEarrings")]
+    public async Task<IActionResult> GetAllEarrings()
+    {
+        // Adaptamos para que sea async si el servicio lo requiere, o síncrono si no
+        var listIncomes = await _incomesService.GetAllEarrings();
+        return Ok(new
+        {
+            Message = "Ingresos pendientes",
+            listIncomes
+        });
     }
 
     // GET /api/incomes/{id}

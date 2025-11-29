@@ -2,6 +2,10 @@
 
 public class Patient : Person
 {
+    public Patient()
+    {
+        Id = Guid.NewGuid();
+    }
     public Affiliate? Affiliate { get; set; }
     public Domicilie? Domicilie { get; set; }
 }

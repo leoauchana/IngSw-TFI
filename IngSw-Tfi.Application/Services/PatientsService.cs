@@ -4,8 +4,8 @@ using IngSw_Tfi.Application.Interfaces;
 using IngSw_Tfi.Domain.Entities;
 using IngSw_Tfi.Domain.Repository;
 using IngSw_Tfi.Domain.ValueObjects;
-using IngSw_Tfi.Application.Exceptions;
 using IngSw_Tfi.Domain.Interfaces;
+
 namespace IngSw_Tfi.Application.Services;
 
 public class PatientsService : IPatientsService
@@ -72,15 +72,11 @@ public class PatientsService : IPatientsService
         newPatient.Id = Guid.NewGuid();
         await _patientRepository.AddPatient(newPatient);
         
-        Console.WriteLine($"🔍 DEBUG: newPatient.BirthDate = {newPatient.BirthDate}");
-        Console.WriteLine($"🔍 DEBUG: newPatient.Phone = {newPatient.Phone}");
-        
         return new PatientDto.Response(newPatient.Id.Value, newPatient.Cuil.Value!, newPatient.Name!, newPatient.LastName!, newPatient.Email!,
                     newPatient.BirthDate, newPatient.Phone, newPatient.Domicilie!.Street!, newPatient.Domicilie.Number, newPatient.Domicilie.Locality!);
     }
     public async Task<List<PatientDto.Response>?> GetByCuil(string cuilPatient)
     {
-        //var cuilValid = Cuil.Create(cuilPatient);
         var patientsFounds = await _patientRepository.GetByCuil(cuilPatient);
         if (patientsFounds == null || !(patientsFounds.Count > 0))
             throw new NullException($"No hay pacientes que coincidan con el cuil {cuilPatient} registrados.");

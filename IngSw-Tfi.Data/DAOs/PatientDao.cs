@@ -17,7 +17,7 @@ public class PatientDao : DaoBase
             """;
         var parameters = new[]{
             new MySqlParameter("@Id", newPatient.Id?.ToString() ?? Guid.NewGuid().ToString()),
-            new MySqlParameter("@HealthInsuranceId", DBNull.Value),
+            new MySqlParameter("@HealthInsuranceId", newPatient.Affiliate?.SocialWork?.Id ?? (object)DBNull.Value),
             new MySqlParameter("@Cuil", newPatient.Cuil?.Value ?? string.Empty),
             new MySqlParameter("@FirstName", newPatient.Name ?? string.Empty),
             new MySqlParameter("@LastName", newPatient.LastName ?? string.Empty),
@@ -30,7 +30,7 @@ public class PatientDao : DaoBase
         };
         await ExecuteNonQuery(query, parameters);
     }
-    
+
     public async Task<List<Dictionary<string, object>>?> GetByCuil(string cuilPatient)
     {
         var query = "SELECT * FROM patient WHERE patient_cuil LIKE @CuilPatient";
@@ -72,7 +72,7 @@ public class PatientDao : DaoBase
             """;
         var parameters = new[]{
             new MySqlParameter("@Id", newPatient.Id?.ToString() ?? Guid.NewGuid().ToString()),
-            new MySqlParameter("@HealthInsuranceId", DBNull.Value),
+            new MySqlParameter("@HealthInsuranceId", newPatient.Affiliate?.SocialWork?.Id ?? (object)DBNull.Value),
             new MySqlParameter("@Cuil", newPatient.Cuil?.Value ?? string.Empty),
             new MySqlParameter("@FirstName", newPatient.Name ?? string.Empty),
             new MySqlParameter("@LastName", newPatient.LastName ?? string.Empty),

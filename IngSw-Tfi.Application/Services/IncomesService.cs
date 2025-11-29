@@ -2,7 +2,9 @@
 using IngSw_Tfi.Application.Exceptions;
 using IngSw_Tfi.Application.Interfaces;
 using IngSw_Tfi.Domain.Entities;
+using IngSw_Tfi.Domain.Enums;
 using IngSw_Tfi.Domain.Repository;
+using IngSw_Tfi.Domain.ValueObjects;
 
 namespace IngSw_Tfi.Application.Services;
 
@@ -35,14 +37,14 @@ public class IncomesService : IIncomesService
             FrequencyRespiratory = newIncome.frecuencyRespiratory,
             SystolicRate = newIncome.frecuencySystolic,
             DiastolicRate = newIncome.frecuencyDiastolic,
-            IncomeStatus = null
+            IncomeStatus = IncomeStatus.EARRING
         };
 
         var t = Task.Run(async () =>
         {
-            // Resolve patient: patient JsonElement may contain id, cuil or dni or full object
             try
             {
+                // Resolve patient logic... (Keeping our robust implementation)
                 if (newIncome.patient.ValueKind != System.Text.Json.JsonValueKind.Undefined && newIncome.patient.ValueKind != System.Text.Json.JsonValueKind.Null)
                 {
                     var p = newIncome.patient;
@@ -51,7 +53,6 @@ public class IncomesService : IIncomesService
                         var idStr = pid.GetString();
                         if (!string.IsNullOrEmpty(idStr))
                         {
-                            // Try find by GUID id
                             var patient = await _patientRepository.GetByGuid(idStr);
                             if (patient != null) income.Patient = patient;
                         }
@@ -65,31 +66,13 @@ public class IncomesService : IIncomesService
                             if (found != null && found.Count > 0) income.Patient = found.First();
                         }
                     }
-                    if (income.Patient == null && p.TryGetProperty("dni", out var pdni) && (pdni.ValueKind == System.Text.Json.JsonValueKind.String || pdni.ValueKind == System.Text.Json.JsonValueKind.Number))
-                    {
-                        var dni = pdni.GetString();
-                        if (!string.IsNullOrEmpty(dni))
-                        {
-                            // Attempt to find by cuil-like pattern or by dni in patient table (not implemented); fallback: create patient
-                            var newPatient = new Domain.Entities.Patient
-                            {
-                                Id = Guid.NewGuid(),
-                                Name = p.TryGetProperty("nombre", out var pnom) ? pnom.GetString() ?? string.Empty : string.Empty,
-                                LastName = p.TryGetProperty("apellido", out var pap) ? pap.GetString() ?? string.Empty : string.Empty,
-                                Email = p.TryGetProperty("email", out var pmail) ? pmail.GetString() ?? string.Empty : string.Empty,
-                                Domicilie = new Domain.Entities.Domicilie { Street = p.TryGetProperty("street", out var pst) ? pst.GetString() ?? string.Empty : string.Empty, Number = 0, Locality = "" }
-                            };
-                            await _patientRepository.AddPatient(newPatient);
-                            income.Patient = newPatient;
-                        }
-                    }
-                    // If still null, and patient json has name/email, create patient
-                    if (income.Patient == null && (p.TryGetProperty("nombre", out var pnom2) || p.TryGetProperty("name", out var pname2)))
+                    // Fallback create patient logic...
+                    if (income.Patient == null && (p.TryGetProperty("nombre", out var pnom) || p.TryGetProperty("name", out var pname)))
                     {
                         var newPatient = new Domain.Entities.Patient
                         {
                             Id = Guid.NewGuid(),
-                            Name = p.TryGetProperty("nombre", out var pn) ? pn.GetString() ?? (p.TryGetProperty("name", out var pn2) ? pn2.GetString() ?? string.Empty : string.Empty) : (p.TryGetProperty("name", out var pn3) ? pn3.GetString() ?? string.Empty : string.Empty),
+                            Name = p.TryGetProperty("nombre", out var pn) ? pn.GetString() ?? string.Empty : (p.TryGetProperty("name", out var pn2) ? pn2.GetString() ?? string.Empty : string.Empty),
                             LastName = p.TryGetProperty("apellido", out var pa) ? pa.GetString() ?? string.Empty : string.Empty,
                             Email = p.TryGetProperty("email", out var pe) ? pe.GetString() ?? string.Empty : string.Empty,
                             Domicilie = new Domain.Entities.Domicilie { Street = "", Number = 0, Locality = "" }
@@ -99,40 +82,21 @@ public class IncomesService : IIncomesService
                     }
                 }
 
-                // Resolve nurse if provided
-                // Resolve nurse if provided
+                // Resolve nurse logic...
                 if (newIncome.nurse.ValueKind != System.Text.Json.JsonValueKind.Undefined && newIncome.nurse.ValueKind != System.Text.Json.JsonValueKind.Null)
                 {
                     var n = newIncome.nurse;
                     string? idStr = null;
-
-                    if (n.ValueKind == System.Text.Json.JsonValueKind.String)
-                    {
-                        idStr = n.GetString();
-                    }
-                    else if (n.TryGetProperty("id", out var nid) && nid.ValueKind == System.Text.Json.JsonValueKind.String)
-                    {
-                        idStr = nid.GetString();
-                    }
-
-                    Console.WriteLine($"🔍 DEBUG: Nurse ID from request: {idStr}");
+                    if (n.ValueKind == System.Text.Json.JsonValueKind.String) idStr = n.GetString();
+                    else if (n.TryGetProperty("id", out var nid) && nid.ValueKind == System.Text.Json.JsonValueKind.String) idStr = nid.GetString();
 
                     if (!string.IsNullOrEmpty(idStr) && Guid.TryParse(idStr, out var g))
                     {
                         income.Nurse = new Domain.Entities.Nurse { Id = g };
-                        Console.WriteLine($"✅ DEBUG: Nurse assigned to income: {g}");
                     }
-                    else
-                    {
-                        Console.WriteLine("⚠️ DEBUG: Could not parse Nurse ID or it was empty");
-                    }
-                }
-                else 
-                {
-                    Console.WriteLine("⚠️ DEBUG: newIncome.nurse is Undefined or Null");
                 }
 
-                // Use a single DB connection + transaction for create patient (if needed) + insert income
+                // Transactional insert
                 using (var conn = (MySql.Data.MySqlClient.MySqlConnection)_sqlConnection.CreateConnection())
                 {
                     conn.Open();
@@ -140,43 +104,6 @@ public class IncomesService : IIncomesService
                     {
                         try
                         {
-                            // If patient not resolved yet, try non-transactional lookups first
-                            if (income.Patient == null && newIncome.patient.ValueKind != System.Text.Json.JsonValueKind.Null && newIncome.patient.ValueKind != System.Text.Json.JsonValueKind.Undefined)
-                            {
-                                var p = newIncome.patient;
-                                if (p.TryGetProperty("id", out var pid) && pid.ValueKind == System.Text.Json.JsonValueKind.String)
-                                {
-                                    var idStr = pid.GetString();
-                                    if (!string.IsNullOrEmpty(idStr))
-                                    {
-                                        var found = await _patientRepository.GetByGuid(idStr);
-                                        if (found != null) income.Patient = found;
-                                    }
-                                }
-                                if (income.Patient == null && p.TryGetProperty("cuil", out var pcuil) && pcuil.ValueKind == System.Text.Json.JsonValueKind.String)
-                                {
-                                    var cuil = pcuil.GetString();
-                                    var foundList = await _patientRepository.GetByCuil(cuil);
-                                    if (foundList != null && foundList.Count > 0) income.Patient = foundList.First();
-                                }
-                            }
-
-                            // If still no patient, create within transaction
-                            if (income.Patient == null && newIncome.patient.ValueKind != System.Text.Json.JsonValueKind.Null && newIncome.patient.ValueKind != System.Text.Json.JsonValueKind.Undefined)
-                            {
-                                var p = newIncome.patient;
-                                var newPatient = new Domain.Entities.Patient
-                                {
-                                    Id = Guid.NewGuid(),
-                                    Name = p.TryGetProperty("nombre", out var pnom) ? pnom.GetString() ?? string.Empty : (p.TryGetProperty("name", out var pname) ? pname.GetString() ?? string.Empty : string.Empty),
-                                    LastName = p.TryGetProperty("apellido", out var pap) ? pap.GetString() ?? string.Empty : string.Empty,
-                                    Email = p.TryGetProperty("email", out var pmail) ? pmail.GetString() ?? string.Empty : string.Empty,
-                                    Domicilie = new Domain.Entities.Domicilie { Street = p.TryGetProperty("street", out var pst) ? pst.GetString() ?? string.Empty : string.Empty, Number = 0, Locality = "" }
-                                };
-                                await ((IngSw_Tfi.Data.Repositories.PatientRepository)_patientRepository).AddPatient(newPatient, conn, tx);
-                                income.Patient = newPatient;
-                            }
-
                             // Validar que el paciente no tenga ya un ingreso activo
                             if (income.Patient != null)
                             {
@@ -188,13 +115,11 @@ public class IncomesService : IIncomesService
 
                                 if (hasActiveIncome)
                                 {
-                                    throw new BusinessConflicException($"El paciente {income.Patient.Name} {income.Patient.LastName} ya tiene un ingreso activo en la cola de espera. No puede agregarse nuevamente hasta que sea atendido.");
+                                    throw new BusinessConflicException($"El paciente {income.Patient.Name} {income.Patient.LastName} ya tiene un ingreso activo.");
                                 }
                             }
 
-                            // Insert income using same connection/transaction
                             await ((IngSw_Tfi.Data.Repositories.IncomeRepository)_incomeRepository).Add(income, conn, tx);
-
                             tx.Commit();
                         }
                         catch
@@ -206,9 +131,8 @@ public class IncomesService : IIncomesService
                 }
                 return MapToDto(income);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // Bubble up exception (handled by middleware)
                 throw;
             }
         });
@@ -231,12 +155,32 @@ public class IncomesService : IIncomesService
 
     public async Task<List<IncomeDto.Response>?> GetAll()
     {
-        var incomes = await _incomeRepository.GetAll(); // Asumo que GetAllEarrings trae todo o debería haber un GetAll real. El controller llama a GetAll.
-        // Nota: IncomeRepository parece tener solo GetAllEarrings implementado en la interfaz?
-        // Si GetAll debe traer todo (incluyendo finalizados), deberíamos usar otro método del repo.
-        // Por ahora usaré GetAllEarrings como estaba antes.
+        var incomes = await _incomeRepository.GetAll();
         if (incomes == null || incomes.Count == 0) return new List<IncomeDto.Response>();
         return incomes.Select(MapToDto).ToList();
+    }
+
+    public async Task<IncomeDto.Response?> UpdateIncomeStatus(string incomeId, string newStatus)
+    {
+        if (!Guid.TryParse(incomeId, out var guid)) throw new ArgumentException("ID de ingreso inválido");
+
+        var allIncomes = await _incomeRepository.GetAll();
+        var income = allIncomes?.FirstOrDefault(i => i.Id == guid);
+
+        if (income == null) return null;
+
+        Domain.Enums.IncomeStatus status = newStatus switch
+        {
+            "PENDIENTE" => Domain.Enums.IncomeStatus.EARRING,
+            "EN_PROCESO" => Domain.Enums.IncomeStatus.IN_PROCESS,
+            "FINALIZADO" => Domain.Enums.IncomeStatus.FINISHED,
+            _ => throw new ArgumentException($"Estado '{newStatus}' no válido")
+        };
+
+        income.IncomeStatus = status;
+        await _incomeRepository.UpdateStatus(income.Id ?? Guid.Empty, status);
+
+        return MapToDto(income);
     }
 
     private IncomeDto.Response MapToDto(Income income)
@@ -254,7 +198,6 @@ public class IncomesService : IIncomesService
             income.Patient?.Domicilie?.Locality ?? string.Empty
         );
 
-        // Mapear Nivel de Emergencia (0-4 a 1-5 para frontend)
         var levelId = (int)income.EmergencyLevel + 1;
         var levelLabel = income.EmergencyLevel switch
         {
@@ -266,17 +209,8 @@ public class IncomesService : IIncomesService
             _ => "Desconocido"
         };
 
-        // Mapear Estado
-        // Si IncomeStatus es null, asumimos PENDIENTE (EARRING)
         var status = income.IncomeStatus ?? Domain.Enums.IncomeStatus.EARRING;
-        
-        var statusId = status switch
-        {
-            Domain.Enums.IncomeStatus.EARRING => "PENDIENTE",
-            Domain.Enums.IncomeStatus.IN_PROCESS => "EN_PROCESO",
-            Domain.Enums.IncomeStatus.FINISHED => "FINALIZADO",
-            _ => "PENDIENTE"
-        };
+        var statusId = status.ToString();
         var statusLabel = status switch
         {
             Domain.Enums.IncomeStatus.EARRING => "Pendiente",
@@ -285,7 +219,6 @@ public class IncomesService : IIncomesService
             _ => "Pendiente"
         };
 
-        // Mapear información de la enfermera
         IncomeDto.NurseDto? nurseDto = null;
         if (income.Nurse != null)
         {
@@ -311,42 +244,5 @@ public class IncomesService : IIncomesService
             income.Description,
             nurseDto
         );
-    }
-
-    public async Task<IncomeDto.Response?> UpdateIncomeStatus(string incomeId, string newStatus)
-    {
-        // Parse income ID (assuming it's a Guid in string format)
-        if (!Guid.TryParse(incomeId, out var guid))
-        {
-            throw new ArgumentException("ID de ingreso inválido");
-        }
-
-        // Get income from repository
-        // Note: IIncomeRepository doesn't have GetByGuid, so we need to use GetAll and filter
-        // In a production system, this should be optimized with a proper GetById method
-        var allIncomes = await _incomeRepository.GetAll();
-        var income = allIncomes?.FirstOrDefault(i => i.Id == guid);
-
-        if (income == null)
-        {
-            return null;
-        }
-
-        // Map string status to enum
-        Domain.Enums.IncomeStatus status = newStatus switch
-        {
-            "PENDIENTE" => Domain.Enums.IncomeStatus.EARRING,
-            "EN_PROCESO" => Domain.Enums.IncomeStatus.IN_PROCESS,
-            "FINALIZADO" => Domain.Enums.IncomeStatus.FINISHED,
-            _ => throw new ArgumentException($"Estado '{newStatus}' no válido")
-        };
-
-        // Update status
-        income.IncomeStatus = status;
-
-        // Save changes to database
-        await _incomeRepository.UpdateStatus(income.Id ?? Guid.Empty, status);
-
-        return MapToDto(income);
     }
 }

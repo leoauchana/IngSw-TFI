@@ -5,7 +5,6 @@ namespace IngSw_Tfi.Domain.Entities;
 
 public class Person : EntityBase
 {
-    //TODO: Podriamos implementar un value object para la propiedad cuil
     public Cuil? Cuil { get; set; }
     public string? Name { get; set; }
     public string? LastName { get; set; }

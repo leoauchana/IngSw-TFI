@@ -2,12 +2,12 @@
 
 public class Frecuency
 {
-    public double Value { get; set; }
-    public Frecuency(double value)
+    public float Value { get; set; }
+    public Frecuency(float value)
     {
         Value = value;
     }
-    public static Frecuency Create(double frecuency)
+    public static Frecuency Create(float frecuency)
     {
         if (frecuency <= 0)
             throw new ArgumentException("La frecuencia debe ser mayor a cero.");

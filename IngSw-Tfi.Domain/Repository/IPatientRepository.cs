@@ -5,8 +5,8 @@ namespace IngSw_Tfi.Domain.Repository;
 public interface IPatientRepository
 {
     Task<List<Patient>?> GetByCuil(string cuilPatient);
-    Task AddPatient(Patient newPatient);
     Task<List<Patient>?> GetAll();
+    Task AddPatient(Patient newPatient);
     Task<Patient?> GetById(int id);
     Task<Patient?> GetByGuid(string id);
 }

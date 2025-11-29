@@ -1,9 +1,7 @@
-
 using IngSw_Tfi.Api.Middlewares;
-using IngSw_Tfi.Application.Interfaces;
-using IngSw_Tfi.Application.Services;
 using IngSw_Tfi.Application;
 using IngSw_Tfi.Data;
+using IngSw_Tfi.Transversal;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -17,7 +15,6 @@ namespace IngSw_Tfi.Api
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
             builder.Services.AddControllers();
             
             // Configurar rutas como case-insensitive para evitar errores 404
@@ -28,13 +25,9 @@ namespace IngSw_Tfi.Api
             });
             
             // Register data and application layer services
-            // Data services register repositories and DB connection
             builder.Services.AddDataServices(builder.Configuration);
-            // Application services (IAuthService, IPatientsService, IIncomesService)
             builder.Services.AddApplicationServices();
-            // Transversal / external services
-            // Register SocialWorkServiceApi as the implementation of ISocialWorkServiceApi
-            builder.Services.AddScoped<IngSw_Tfi.Domain.Interfaces.ISocialWorkServiceApi, IngSw_Tfi.Transversal.Services.SocialWorkServiceApi>();
+            builder.Services.AddTransversalServices();
 
             // JWT Authentication
             var jwtKey = builder.Configuration["Jwt:Key"];
@@ -90,17 +83,15 @@ namespace IngSw_Tfi.Api
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
-
             app.UseCors("AllowFrontend");
+
+            app.UseHttpsRedirection();
+            
+            app.UseMiddleware<ExceptionMiddleware>();
 
             app.UseAuthentication();
 
             app.UseAuthorization();
-
-            app.UseMiddleware<ExceptionMiddleware>();
-
-            app.MapControllers();
 
             app.MapControllers();
 

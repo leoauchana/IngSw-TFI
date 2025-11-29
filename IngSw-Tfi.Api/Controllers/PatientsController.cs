@@ -13,7 +13,7 @@ public class PatientsController : ControllerBase
     {
         _patientsService = patientsService;
     }
-    [HttpGet("getByCuil{cuilPatient}")]
+    [HttpGet("getByCuil/{cuilPatient}")]
     public async Task<IActionResult> GetByCuil(string cuilPatient)
     {
         var patientsFound = await _patientsService.GetByCuil(cuilPatient);
@@ -23,7 +23,18 @@ public class PatientsController : ControllerBase
             Message = "Pacientes encontrados.",
             patientsFound
         });
-    } 
+    }
+    [HttpGet("getAll")]
+    public async Task<IActionResult> GetAll()
+    {
+        var patientsList = await _patientsService.GetAll();
+        if (patientsList == null) return BadRequest("Hubo un error al obtener los pacientes.");
+        return Ok(new
+        {
+            Message = "Pacientes registrados.",
+            patientsList
+        });
+    }
     [HttpPost]
     public async Task<IActionResult> AddPatient([FromBody] PatientDto.Request patientDto)
     {

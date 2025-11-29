@@ -2,7 +2,9 @@
 
 public class FrecuencySystolic : Frecuency
 {
-    public FrecuencySystolic(double value) : base(value)
+    public FrecuencySystolic(float value) : base(value)
     {
+        if (value < 90 || value > 120)
+            throw new ArgumentException("La frecuencia sistólica debe estar entre 90 y 120 mmHg.");
     }
 }
