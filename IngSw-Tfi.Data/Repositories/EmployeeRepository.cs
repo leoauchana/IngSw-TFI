@@ -1,78 +1,54 @@
 ﻿using IngSw_Tfi.Data.DAOs;
 using IngSw_Tfi.Domain.Entities;
 using IngSw_Tfi.Domain.Repository;
+using IngSw_Tfi.Domain.ValueObjects;
 
 namespace IngSw_Tfi.Data.Repositories;
 
 public class EmployeeRepository : IEmployeeRepository
 {
     private readonly EmployeeDao _employeeDao;
-
     public EmployeeRepository(EmployeeDao employeeDao)
     {
         _employeeDao = employeeDao;
     }
-
-    public async Task<Employee?> GetByEmail(string userEmail)
+    public async Task<Employee?> GetByEmail(string email)
     {
-        var record = await _employeeDao.GetByEmail(userEmail);
-        if (record == null) return null;
+        // Buscar en nurse
+        var nurseData = await _employeeDao.GetByEmailNurse(email);
+        if (nurseData is not null)
+            return MapEntity(nurseData.FirstOrDefault()!);
 
-        var idNurse = record.GetValueOrDefault("id_nurse");
-        var idDoctor = record.GetValueOrDefault("id_doctor");
-        
-        Employee employee;
-        string? targetId = null;
+        // Buscar en doctor
+        var doctorData = await _employeeDao.GetByEmailDoctor(email);
+        if (doctorData is not null)
+            return MapEntity(doctorData.FirstOrDefault()!);
 
-        if (idNurse != null && !string.IsNullOrEmpty(idNurse.ToString()))
-        {
-            employee = new Nurse();
-            targetId = idNurse.ToString();
-        }
-        else if (idDoctor != null && !string.IsNullOrEmpty(idDoctor.ToString()))
-        {
-            employee = new Doctor();
-            targetId = idDoctor.ToString();
-        }
-        else
-        {
-            employee = new Employee();
-            if (record.TryGetValue("idusuario", out var idObj))
-            {
-                targetId = idObj?.ToString();
-            }
-        }
-
-        if (targetId != null && Guid.TryParse(targetId, out var guid))
-        {
-            employee.Id = guid;
-        }
-
-        employee.Email = Convert.ToString(record.GetValueOrDefault("email"));
-
-        var firstName = record.GetValueOrDefault("doctor_first_name") ?? record.GetValueOrDefault("nurse_first_name");
-        var lastName = record.GetValueOrDefault("doctor_last_name") ?? record.GetValueOrDefault("nurse_last_name");
-        var phone = record.GetValueOrDefault("doctor_phone") ?? record.GetValueOrDefault("nurse_phone");
-        var registration = record.GetValueOrDefault("doctor_license") ?? string.Empty;
-        var cuil = record.GetValueOrDefault("doctor_cuil") ?? string.Empty;
-
-        employee.Name = Convert.ToString(firstName);
-        employee.LastName = Convert.ToString(lastName);
-        employee.PhoneNumber = Convert.ToString(phone);
-        employee.Registration = Convert.ToString(registration);
-        employee.Cuil = !string.IsNullOrEmpty(Convert.ToString(cuil)) ? IngSw_Tfi.Domain.ValueObjects.Cuil.Create(Convert.ToString(cuil)!) : null;
-
-        employee.User = new User
-        {
-            Email = Convert.ToString(record.GetValueOrDefault("email")),
-            Password = Convert.ToString(record.GetValueOrDefault("password"))
-        };
-
-        return employee;
+        return null;
     }
 
     public Task<Employee?> Register(Employee employee)
     {
         throw new NotImplementedException();
+    }
+
+    private Employee MapEntity(Dictionary<string, object> value)
+    {
+        bool isDoctor = value.ContainsKey("license_number");
+
+        Employee employee = isDoctor ? new Doctor() : new Nurse();
+
+        employee.Cuil = Cuil.Create(value.GetValueOrDefault("cuil")?.ToString()!);
+        employee.Name = value.GetValueOrDefault("first_name")?.ToString();
+        employee.LastName = value.GetValueOrDefault("last_name")?.ToString();
+        employee.Email = value.GetValueOrDefault("email")?.ToString();
+        employee.PhoneNumber = value.GetValueOrDefault("phone_number")?.ToString();
+       // employee.User = null;
+        if (isDoctor)
+        {
+            ((Doctor)employee).Registration = value.GetValueOrDefault("licence_number")?.ToString()!;
+        }
+
+        return employee;
     }
 }
