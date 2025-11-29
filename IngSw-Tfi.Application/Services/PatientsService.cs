@@ -2,9 +2,10 @@
 using IngSw_Tfi.Application.Exceptions;
 using IngSw_Tfi.Application.Interfaces;
 using IngSw_Tfi.Domain.Entities;
+using IngSw_Tfi.Domain.Interfaces;
 using IngSw_Tfi.Domain.Repository;
 using IngSw_Tfi.Domain.ValueObjects;
-using IngSw_Tfi.Domain.Interfaces;
+using System.Collections.Generic;
 
 namespace IngSw_Tfi.Application.Services;
 
@@ -59,8 +60,8 @@ public class PatientsService : IPatientsService
             Name = patientData.namePatient,
             LastName = patientData.lastNamePatient,
             Email = patientData.email,
-            BirthDate = patientData.birthDate,
-            Phone = patientData.phone,
+            //BirthDate = patientData.birthDate,
+            //Phone = patientData.phone,
             Domicilie = new Domicilie
             {
                 Number = patientData.numberDomicilie,
@@ -69,10 +70,9 @@ public class PatientsService : IPatientsService
             },
             Affiliate = affiliation
         };
-        newPatient.Id = Guid.NewGuid();
         await _patientRepository.AddPatient(newPatient);
-        
-        return new PatientDto.Response(newPatient.Id.Value, newPatient.Cuil.Value!, newPatient.Name!, newPatient.LastName!, newPatient.Email!,
+
+        return new PatientDto.Response(newPatient.Id, newPatient.Cuil.Value!, newPatient.Name!, newPatient.LastName!, newPatient.Email!,
                     newPatient.BirthDate, newPatient.Phone, newPatient.Domicilie!.Street!, newPatient.Domicilie.Number, newPatient.Domicilie.Locality!);
     }
     public async Task<List<PatientDto.Response>?> GetByCuil(string cuilPatient)
@@ -80,7 +80,7 @@ public class PatientsService : IPatientsService
         var patientsFounds = await _patientRepository.GetByCuil(cuilPatient);
         if (patientsFounds == null || !(patientsFounds.Count > 0))
             throw new NullException($"No hay pacientes que coincidan con el cuil {cuilPatient} registrados.");
-        return patientsFounds.Select(pr => new PatientDto.Response(pr.Id ?? Guid.Empty, pr.Cuil!.Value!, pr.Name!, pr.LastName!,
+        return patientsFounds.Select(pr => new PatientDto.Response(pr.Id, pr.Cuil!.Value!, pr.Name!, pr.LastName!,
                     pr.Email!, pr.BirthDate, pr.Phone, pr.Domicilie!.Street!, pr.Domicilie.Number, pr.Domicilie.Locality!))
                     .ToList();
     }
@@ -88,7 +88,7 @@ public class PatientsService : IPatientsService
     {
         var patients = await _patientRepository.GetAll();
         if (patients == null || patients.Count == 0) return new List<PatientDto.Response>();
-        return patients.Select(p => new PatientDto.Response(p.Id ?? Guid.Empty, p.Cuil?.Value ?? string.Empty, p.Name ?? string.Empty, p.LastName ?? string.Empty,
+        return patients.Select(p => new PatientDto.Response(p.Id, p.Cuil?.Value ?? string.Empty, p.Name ?? string.Empty, p.LastName ?? string.Empty,
             p.Email ?? string.Empty, p.BirthDate, p.Phone, p.Domicilie?.Street ?? string.Empty, p.Domicilie?.Number ?? 0, p.Domicilie?.Locality ?? string.Empty)).ToList();
     }
 
@@ -96,7 +96,43 @@ public class PatientsService : IPatientsService
     {
         var patient = await _patientRepository.GetById(id);
         if (patient == null) return null;
-        return new PatientDto.Response(patient.Id ?? Guid.Empty, patient.Cuil?.Value ?? string.Empty, patient.Name ?? string.Empty, patient.LastName ?? string.Empty,
+        return new PatientDto.Response(patient.Id, patient.Cuil?.Value ?? string.Empty, patient.Name ?? string.Empty, patient.LastName ?? string.Empty,
             patient.Email ?? string.Empty, patient.BirthDate, patient.Phone, patient.Domicilie?.Street ?? string.Empty, patient.Domicilie?.Number ?? 0, patient.Domicilie?.Locality ?? string.Empty);
+    }
+
+    public async Task<List<PatientDto.Response>> GetByDni(string dni)
+    {
+        var patientsFounds = await _patientRepository.GetAll();
+
+        var listDni = patientsFounds?.Where(p =>
+        {
+            if (string.IsNullOrWhiteSpace(p.Cuil!.Value))
+                return false;
+
+            var parts = p.Cuil.Value.Split('-');
+            if (parts.Length != 3)
+                return false;
+
+            return parts[1] == dni;
+        }).ToList() ?? new List<Patient>();
+        return listDni
+        .Select(p => new PatientDto.Response(
+            p.Id,
+            p.Cuil!.Value!,
+            p.Name!,
+            p.LastName!,
+            p.Email!,
+            //p.BirthDate,
+            //p.Phone,
+            p.Domicilie!.Street!,
+            p.Domicilie.Number,
+            p.Domicilie.Locality!
+    ))
+    .ToList();
+        //if (patientsFounds == null || !(patientsFounds.Count > 0))
+        //    throw new NullException($"No hay pacientes que coincidan con el cuil {cuilPatient} registrados.");
+        //return patientsFounds.Select(pr => new PatientDto.Response(pr.Id, pr.Cuil!.Value!, pr.Name!, pr.LastName!,
+        //            pr.Email!, pr.BirthDate, pr.Phone, pr.Domicilie!.Street!, pr.Domicilie.Number, pr.Domicilie.Locality!))
+        //            .ToList();
     }
 }

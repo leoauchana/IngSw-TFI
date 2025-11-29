@@ -30,7 +30,7 @@ public class AuthService : IAuthService
         var token = TokenGenerator(employeeFound);
         return new UserDto.Response
         (
-            employeeFound.Id?.ToString() ?? string.Empty,
+            employeeFound.Id.ToString() ?? string.Empty,
             employeeFound.Email!,
             employeeFound.Name!,
             employeeFound.LastName!,
@@ -94,7 +94,7 @@ public class AuthService : IAuthService
 
         return employeeRegistered != null ? new UserDto.Response
         (
-            employeeRegistered.Id?.ToString() ?? string.Empty,
+            employeeRegistered.Id.ToString() ?? string.Empty,
             employeeRegistered.Email!,
             employeeRegistered.Name!,
             employeeRegistered.LastName!,

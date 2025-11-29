@@ -16,7 +16,7 @@ public class PatientDao : DaoBase
             VALUES (@Id, @HealthInsuranceId, @Cuil, @FirstName, @LastName, @Email, @Phone, @BirthDate, @Street, @Number, @Locality)
             """;
         var parameters = new[]{
-            new MySqlParameter("@Id", newPatient.Id?.ToString() ?? Guid.NewGuid().ToString()),
+            new MySqlParameter("@Id", newPatient.Id.ToString() ?? Guid.NewGuid().ToString()),
             new MySqlParameter("@HealthInsuranceId", newPatient.Affiliate?.SocialWork?.Id ?? (object)DBNull.Value),
             new MySqlParameter("@Cuil", newPatient.Cuil?.Value ?? string.Empty),
             new MySqlParameter("@FirstName", newPatient.Name ?? string.Empty),

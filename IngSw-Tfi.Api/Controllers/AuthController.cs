@@ -17,32 +17,17 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] UserDto.Request credentials)
     {
-        try
-        {
             var user = await _authService.Login(credentials);
             if (user == null) return Unauthorized(new { message = "Usuario o contraseña inválidos" });
             return Ok(user);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] UserDto.RequestRegister newUser)
     {
-        try
-        {
             var registered = await _authService.Register(newUser);
             if (registered == null) return BadRequest(new { message = "No se pudo registrar el usuario." });
             return Ok(registered);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
 }
 
 

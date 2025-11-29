@@ -39,7 +39,7 @@ public class PatientsController : ControllerBase
     public async Task<IActionResult> AddPatient([FromBody] PatientDto.Request patientDto)
     {
         var newPatient = await _patientsService.AddPatient(patientDto);
-        if (newPatient == null) 
+        if (newPatient == null)
             return BadRequest($"Hubo un error al registrar al paciente de cuil {patientDto.cuilPatient}.");
         return Ok(new
         {
@@ -52,28 +52,18 @@ public class PatientsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? dni = null)
     {
-        var list = await _patientsService.GetAll();
-        
-        // Si no se proporciona DNI, devolver todos los pacientes
-        if (string.IsNullOrWhiteSpace(dni))
+        List<PatientDto.Response>? patientsList = null;
+        if (string.IsNullOrEmpty(dni))
         {
-            return Ok(list ?? new List<PatientDto.Response>());
+            patientsList = await _patientsService.GetAll();
         }
-        
-        // Filtrar por DNI extraído del CUIL (formato: XX-DNI-X)
-        var filtered = list?.Where(p =>
+        else
         {
-            if (string.IsNullOrWhiteSpace(p.cuilPatient))
-                return false;
-                
-            var parts = p.cuilPatient.Split('-');
-            if (parts.Length != 3)
-                return false;
-                
-            return parts[1] == dni;
-        }).ToList() ?? new List<PatientDto.Response>();
-        
-        return Ok(filtered);
+            patientsList = await _patientsService.GetByDni(dni);
+        }
+        if (patientsList == null) return BadRequest("Hubo un error al obtener los pacientes.");
+        return Ok(patientsList);
+
     }
 
     // Nuevo endpoint: GET /api/patients/{id}
