@@ -47,41 +47,4 @@ public class PatientsController : ControllerBase
             newPatient
         });
     }
-    // Nuevo endpoint: GET /api/patients
-    // Soporta filtrado opcional por DNI mediante query parameter ?dni=12345678
-    [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? dni = null)
-    {
-        var list = await _patientsService.GetAll();
-        
-        // Si no se proporciona DNI, devolver todos los pacientes
-        if (string.IsNullOrWhiteSpace(dni))
-        {
-            return Ok(list ?? new List<PatientDto.Response>());
-        }
-        
-        // Filtrar por DNI extraído del CUIL (formato: XX-DNI-X)
-        var filtered = list?.Where(p =>
-        {
-            if (string.IsNullOrWhiteSpace(p.cuilPatient))
-                return false;
-                
-            var parts = p.cuilPatient.Split('-');
-            if (parts.Length != 3)
-                return false;
-                
-            return parts[1] == dni;
-        }).ToList() ?? new List<PatientDto.Response>();
-        
-        return Ok(filtered);
-    }
-
-    // Nuevo endpoint: GET /api/patients/{id}
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
-    {
-        var patient = await _patientsService.GetById(id);
-        if (patient == null) return NotFound();
-        return Ok(patient);
-    }
 }
