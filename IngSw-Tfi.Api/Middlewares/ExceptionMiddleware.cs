@@ -46,7 +46,7 @@ public class ExceptionMiddleware
         {
             _logger.LogError(ex, ex.Message);
             context.Response.ContentType = "application/json";
-            context.Response.StatusCode = (int)HttpStatusCode.NoContent;
+            context.Response.StatusCode = (int)HttpStatusCode.OK;
             var response = _env.IsDevelopment() ? new ApiException(context.Response.StatusCode, ex.Message, ex.StackTrace)
                 : new ApiException(context.Response.StatusCode, "Resource empty");
             var jsonResponse = JsonSerializer.Serialize(response);
