@@ -4,13 +4,14 @@ namespace IngSw_Tfi.Transversal.Services;
 
 public class SocialWorkServiceApi : ISocialWorkServiceApi
 {
+    // Implementación simple de desarrollo: asumir que la obra social existe y el número de afiliado es válido.
     public Task<bool> ExistingSocialWork(string socialWork)
     {
-        throw new NotImplementedException();
+        return Task.FromResult(true);
     }
 
     public Task<bool> IsAffiliated(string affiliateNumber)
     {
-        throw new NotImplementedException();
+        return Task.FromResult(true);
     }
 }
