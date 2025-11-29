@@ -18,8 +18,8 @@ public class PriorityQueueService : IPriorityQueueService
         lock (_lock)
         {
             var priority = new IncomePriority(
-                income.EmergencyLevel,
-                income.IncomeDate
+                income.EmergencyLevel ?? EmergencyLevel.WITHOUT_URGENCY,
+                income.IncomeDate ?? DateTime.Now
                 );
 
             _queue.Enqueue(income, priority);

@@ -1,6 +1,6 @@
-﻿using IngSw_Tfi.Application.DTOs;
+using IngSw_Tfi.Application.DTOs;
 using IngSw_Tfi.Application.Interfaces;
-using Microsoft.AspNetCore.Mvc; 
+using Microsoft.AspNetCore.Mvc;
 
 namespace IngSw_Tfi.Api.Controllers;
 
@@ -9,19 +9,40 @@ namespace IngSw_Tfi.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
-
     public AuthController(IAuthService authService)
     {
         _authService = authService;
     }
-    public async Task<IActionResult> Login(UserDto.Request userData)
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] UserDto.Request credentials)
     {
-        var userFound = await _authService.Login(userData);
-        if (userFound == null) return BadRequest("Hubo un error al autenticar el usuario.");
-        return Ok(new
+        try
         {
-            Message = "Inicio de sesión exitoso.",
-            userFound
-        });
+            var user = await _authService.Login(credentials);
+            if (user == null) return Unauthorized(new { message = "Usuario o contraseña inválidos" });
+            return Ok(user);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] UserDto.RequestRegister newUser)
+    {
+        try
+        {
+            var registered = await _authService.Register(newUser);
+            if (registered == null) return BadRequest(new { message = "No se pudo registrar el usuario." });
+            return Ok(registered);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }
+
+
