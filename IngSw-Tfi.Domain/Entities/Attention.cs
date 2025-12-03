@@ -9,5 +9,6 @@ public class Attention : EntityBase
         Id = Guid.NewGuid();
     }
     public Doctor? Doctor { get; set; }
+    public Income? Income { get; set; }
     public string? Report { get; set; }
 }

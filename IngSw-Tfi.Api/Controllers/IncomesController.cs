@@ -1,6 +1,7 @@
 ﻿using IngSw_Tfi.Application.DTOs;
 using IngSw_Tfi.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace IngSw_Tfi.Api.Controllers;
 
@@ -25,14 +26,13 @@ public class IncomesController : ControllerBase
     [HttpGet("getAllEarrings")]
     public async Task<IActionResult> GetAllEarrings()
     {
-        // Adaptamos para que sea async si el servicio lo requiere, o síncrono si no
         var listIncomes = await _incomesService.GetAllEarrings();
         return Ok(listIncomes);
     }
 
     // GET /api/incomes/{id}
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<IActionResult> GetById(string id)
     {
         var incomeFound = await _incomesService.GetById(id);
         if (incomeFound == null) return NotFound();
@@ -41,9 +41,11 @@ public class IncomesController : ControllerBase
 
     // POST /api/incomes
     [HttpPost("add")]
-    public async Task<IActionResult> AddIncome([FromBody] IncomeDto.Request newIncome)
+    public async Task<IActionResult> AddIncome([FromBody] IncomeDto.RequestT newIncome)
     {
-        var incomeRegistered = await _incomesService.AddIncome(newIncome);
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null) return BadRequest("No se puedo obtener el ID del empleado.");
+        var incomeRegistered = await _incomesService.AddIncomeT(userId, newIncome);
         if (incomeRegistered == null) return BadRequest();
         return Ok(new
         {

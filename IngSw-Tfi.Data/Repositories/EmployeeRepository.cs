@@ -44,16 +44,8 @@ public class EmployeeRepository : IEmployeeRepository
         else
         {
             employee = new Employee();
-            if (record.TryGetValue("idusuario", out var idObj))
-            {
-                targetId = idObj?.ToString();
-            }
         }
-
-        if (targetId != null && Guid.TryParse(targetId, out var guid))
-        {
-            employee.Id = guid;
-        }
+        employee.Id = Guid.Parse(targetId!);
 
         employee.Email = Convert.ToString(record.GetValueOrDefault("email"));
 
@@ -69,11 +61,21 @@ public class EmployeeRepository : IEmployeeRepository
         employee.Registration = Convert.ToString(registration) ?? string.Empty;
         employee.Cuil = !string.IsNullOrEmpty(Convert.ToString(cuil)) ? IngSw_Tfi.Domain.ValueObjects.Cuil.Create(Convert.ToString(cuil)!) : null;
 
-        employee.User = new User
+        var user = new User();
+
+        if (record.TryGetValue("idusuario", out var idObj))
         {
-            Email = Convert.ToString(record.GetValueOrDefault("email")),
-            Password = Convert.ToString(record.GetValueOrDefault("password"))
-        };
+            targetId = idObj?.ToString();
+        }
+        if (targetId != null && Guid.TryParse(targetId, out var guid))
+        {
+            user.Id = guid;
+        }
+
+        user.Email = Convert.ToString(record.GetValueOrDefault("email"));
+        user.Password = Convert.ToString(record.GetValueOrDefault("password"));
+
+        employee.User = user;
         return employee;
     }
     public Task<Employee?> Register(Employee employee)

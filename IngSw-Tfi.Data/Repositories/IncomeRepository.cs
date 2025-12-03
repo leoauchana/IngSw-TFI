@@ -15,8 +15,7 @@ public class IncomeRepository : IIncomeRepository
         _incomeDao = incomeDao;
     }
     public async Task AddIncome(Income newIncome) => await _incomeDao.AddIncome(newIncome);
-    // public async Task AddTransactional(System.Data.IDbConnection conn, System.Data.IDbTransaction tx, Income newIncome) => await _incomeDao.AddIncome(newIncome, conn, tx);
-    public async Task<Income?> GetById(int idIncome)
+    public async Task<Income?> GetById(string idIncome)
     {
         var incomeData = await _incomeDao.GetById(idIncome);
         return MapEntity(incomeData);
@@ -27,7 +26,6 @@ public class IncomeRepository : IIncomeRepository
         if (incomesData == null) return new List<Income>();
         return incomesData.Select(i => MapEntity(i)).ToList();
     }
-
     public async Task<List<Income>?> GetAllEarrings()
     {
         var allIncomes = await GetAll();

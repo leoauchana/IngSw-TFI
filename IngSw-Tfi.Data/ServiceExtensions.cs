@@ -18,10 +18,12 @@ public static class ServiceExtensions
         services.AddScoped<IPatientRepository, PatientRepository>();
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         services.AddScoped<ISocialWorkRepository, SocialWorkRepository>();
+        services.AddScoped<IAttentionRepository, AttentionRepository>();
         // DAOs
         services.AddScoped<IncomeDao>();
         services.AddScoped<PatientDao>();
         services.AddScoped<EmployeeDao>();
         services.AddScoped<SocialWorkDao>();
+        services.AddScoped<AttentionDao>();
     }
 }

@@ -15,16 +15,14 @@ public class IncomesService : IIncomesService
     private readonly IPatientRepository _patientRepository;
     private readonly IPriorityQueueService _priorityQueueService;
     private readonly IEmployeeRepository _employeeRepository;
-    private readonly IngSw_Tfi.Data.Database.SqlConnection _sqlConnection;
 
     public IncomesService(IIncomeRepository incomeRepository, IPatientRepository patientRepository, 
-        IPriorityQueueService priorityQueueService, IEmployeeRepository employeeRepository, IngSw_Tfi.Data.Database.SqlConnection sqlConnection)
+        IPriorityQueueService priorityQueueService, IEmployeeRepository employeeRepository)
     {
         _incomeRepository = incomeRepository;
         _patientRepository = patientRepository;
         _priorityQueueService = priorityQueueService;
         _employeeRepository = employeeRepository;
-        _sqlConnection = sqlConnection;
     }
     public async Task<IncomeDto.Response?> AddIncome(IncomeDto.Request newIncome)
     {
@@ -60,6 +58,42 @@ public class IncomesService : IIncomesService
         _priorityQueueService.Enqueue(income);
         return MapToDto(income);
     }
+
+    public async Task<IncomeDto.Response?> AddIncomeT(string idUser, IncomeDto.RequestT newIncome)
+    {
+        // Verificar que existe la enfermera registrada
+        var nurseFound = await _employeeRepository.GetById(idUser);
+        if (nurseFound == null) throw new EntityNotFoundException($"No se encontro el empleado autenticado de id {idUser}");
+        // Verificar que exista el paciente registrado
+        var patientFound = await _patientRepository.GetByGuid(newIncome.idPatient);
+        if (patientFound == null) throw new EntityNotFoundException($"No se encontró ningún paciente con cuil {newIncome.idPatient}");
+        // Verificar que el paciente no tenga un ingreso activo
+        var hasActive = _priorityQueueService.HasActiveIncome(Guid.Parse(newIncome.idPatient));
+        if (hasActive) throw new BusinessConflicException("El paciente ya tiene un ingreso activo.");
+
+        var argentinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Argentina/Buenos_Aires");
+        var argentinaTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, argentinaTimeZone);
+
+        var income = new Income
+        {
+            Description = newIncome.report,
+            EmergencyLevel = newIncome.emergencyLevel,
+            IncomeDate = argentinaTime,
+            Temperature = newIncome.temperature,
+            FrequencyCardiac = new FrecuencyCardiac(newIncome.frecuencyCardiac),
+            FrequencyRespiratory = new FrecuencyRespiratory(newIncome.frecuencyRespiratory),
+            BloodPressure = new BloodPressure(new FrecuencySystolic(newIncome.frecuencySystolic),
+                            new FrecuencyDiastolic(newIncome.frecuencyDiastolic)),
+            IncomeStatus = IncomeStatus.EARRING,
+            Patient = patientFound,
+            Nurse = (Nurse)nurseFound
+        };
+
+        await _incomeRepository.AddIncome(income);
+        _priorityQueueService.Enqueue(income);
+        return MapToDto(income);
+    }
+
     public async Task<List<IncomeDto.Response>?> GetAllEarringss()
     {
         var incomesEarrings = await _incomeRepository.GetAllEarrings();
@@ -72,7 +106,7 @@ public class IncomesService : IIncomesService
         if (incomesEarrings == null || !incomesEarrings.Any()) return new List<IncomeDto.Response>();
         return incomesEarrings.Select(MapToDto).ToList();
     }
-    public async Task<IncomeDto.Response?> GetById(int idIncome)
+    public async Task<IncomeDto.Response?> GetById(string idIncome)
     {
         var income = await _incomeRepository.GetById(idIncome);
         if (income == null) return null;

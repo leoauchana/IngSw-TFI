@@ -7,7 +7,7 @@ namespace IngSw_Tfi.Data.DAOs;
 public class IncomeDao : DaoBase
 {
     public IncomeDao(SqlConnection connection) : base(connection) { }
-    public async Task<Dictionary<string, object>?> GetById(int idIncome)
+    public async Task<Dictionary<string, object>?> GetById(string idIncome)
     {
         var query = """
             SELECT a.*, p.*, h.*, 
@@ -42,7 +42,6 @@ public class IncomeDao : DaoBase
             await Add(newIncome, conn, tx);
         });
     }
-
     public async Task Add(Income newIncome, MySqlConnection conn, MySqlTransaction tx)
     {
         var query = """
