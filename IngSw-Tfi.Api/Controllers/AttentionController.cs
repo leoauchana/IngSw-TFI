@@ -30,12 +30,18 @@ public class AttentionController : ControllerBase
             attentionRegistered
         });
     }
-
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateIncomeStatus(string id, [FromBody] UpdateStatusRequest request)
     {
             var result = await _attentionService.UpdateIncomeStatus(id, request.estado);
             if (result == null) return NotFound(new { message = "Ingreso no encontrado" });
             return Ok(new { Message = "Estado actualizado correctamente", data = result });
+    }
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var attentionsRegistered = await _attentionService.GetAll();
+        if (attentionsRegistered == null) return BadRequest("Hubo un error al obtener las atenciones registradas.");
+        return Ok(attentionsRegistered);
     }
 }
