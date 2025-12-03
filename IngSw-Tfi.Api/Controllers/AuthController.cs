@@ -1,6 +1,7 @@
 using IngSw_Tfi.Application.DTOs;
 using IngSw_Tfi.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace IngSw_Tfi.Api.Controllers;
 
