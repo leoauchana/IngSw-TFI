@@ -1,5 +1,4 @@
 ﻿using IngSw_Tfi.Domain.Enums;
-using System.Text.Json;
 
 namespace IngSw_Tfi.Application.DTOs;
 
@@ -39,11 +38,23 @@ public class IncomeDto
         float? systolicRate,
         float? diastolicRate,
         string? report,
-        NurseDto? enfermera
+        EmployeeDto.NurseResponse? enfermera
     );
+
+    public record ResponseShirt(
+        string id,
+        DateTime fechaIngreso,
+        EmergencyLevelDto nivelEmergencia,
+        StatusDto estado,
+        float? temperature,
+        float? heartRate,
+        float? respiratoryRate,
+        float? systolicRate,
+        float? diastolicRate,
+        string? report,
+        EmployeeDto.NurseResponse? enfermera);
 
     public record UpdateStatusRequest(string estado);
     public record EmergencyLevelDto(int id, string label);
     public record StatusDto(string id, string label);
-    public record NurseDto(string id, string nombre, string apellido, string? matricula);
 }

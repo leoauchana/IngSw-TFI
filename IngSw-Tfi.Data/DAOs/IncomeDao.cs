@@ -23,7 +23,7 @@ public class IncomeDao : DaoBase
         var income = await ExecuteReader(query, param);
         return income?.FirstOrDefault();
     }
-    public async Task<List<Dictionary<string, object>>> GetAll()
+    public async Task<List<Dictionary<string, object>>?> GetAll()
     {
         var query = """
             SELECT a.*, p.*, h.*, 

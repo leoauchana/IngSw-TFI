@@ -116,10 +116,10 @@ public class IncomesService : IIncomesService
             _ => "Pendiente"
         };
 
-        IncomeDto.NurseDto? nurseDto = null;
+        EmployeeDto.NurseResponse? nurseDto = null;
         if (income.Nurse != null)
         {
-            nurseDto = new IncomeDto.NurseDto(
+            nurseDto = new EmployeeDto.NurseResponse(
                 income.Nurse.Id.ToString() ?? string.Empty,
                 income.Nurse.Name ?? string.Empty,
                 income.Nurse.LastName ?? string.Empty,

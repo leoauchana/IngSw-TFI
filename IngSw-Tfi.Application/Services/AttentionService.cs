@@ -21,7 +21,6 @@ public class AttentionService : IAttentionService
         _employeeRepository = employeeRepository;
         _attentionRepository = attentionRepository;
     }
-
     public async Task<AttentionDto.Response?> AddAttention(string idDoctor, AttentionDto.Request newAttention)
     {
         var doctorFound = await _employeeRepository.GetById(idDoctor);
@@ -37,9 +36,14 @@ public class AttentionService : IAttentionService
         };
         await _attentionRepository.AddAttention(attention);
         await _incomeRepository.UpdateStatus(Guid.Parse(newAttention.idIncome), IncomeStatus.FINISHED);
-        return new AttentionDto.Response();
+        return MapToDto(attention);
     }
-
+    public async Task<List<AttentionDto.Response>?> GetAll()
+    {
+        var attentionsRegistered = await _attentionRepository.GetAll();
+        if (attentionsRegistered == null || !attentionsRegistered.Any()) return new List<AttentionDto.Response>();
+        return attentionsRegistered.Select(a => MapToDto(a)).ToList();
+    }
     public async Task<IncomeDto.Response?> UpdateIncomeStatus(string incomeId, string newStatus)
     {
         if (!Guid.TryParse(incomeId, out var guid)) throw new ArgumentException("ID de ingreso inválido");
@@ -62,9 +66,40 @@ public class AttentionService : IAttentionService
         income.IncomeStatus = status;
         queueIncome.IncomeStatus = status;
         await _incomeRepository.UpdateStatus(income.Id, status);
-        return MapToDto(queueIncome);
+        return MapIncomeToDto(queueIncome);
     }
-    private IncomeDto.Response MapToDto(Income income)
+    private AttentionDto.Response MapToDto(Attention attention)
+    {
+        if (attention.Income == null)
+            throw new Exception("La atención no contiene un ingreso asociado.");
+
+        var income = attention.Income;
+
+        var incomeDto = MapIncomeToDto(income);
+
+        EmployeeDto.DoctorResponse doctorDto;
+
+        if (attention.Doctor != null)
+        {
+            doctorDto = new EmployeeDto.DoctorResponse(
+                attention.Doctor.Id.ToString(),
+                attention.Doctor.Name ?? string.Empty,
+                attention.Doctor.LastName ?? string.Empty,
+                attention.Doctor.Registration
+            );
+        }
+        else
+        {
+            doctorDto = new EmployeeDto.DoctorResponse("", "", "", "");
+        }
+        return new AttentionDto.Response(
+            attention.Id.ToString(),
+            incomeDto,
+            doctorDto,
+            attention.Report
+        );
+    }
+    private IncomeDto.Response MapIncomeToDto(Income income)
     {
         var patientDto = new PatientDto.Response(
             income.Patient?.Id ?? Guid.Empty,
@@ -94,7 +129,7 @@ public class AttentionService : IAttentionService
             _ => "Desconocido"
         };
 
-        var status = income.IncomeStatus ?? IncomeStatus.EARRING;
+        var status = income.IncomeStatus ?? IncomeStatus.IN_PROCESS;
         var statusId = status.ToString();
         var statusLabel = status switch
         {
@@ -104,10 +139,10 @@ public class AttentionService : IAttentionService
             _ => "Pendiente"
         };
 
-        IncomeDto.NurseDto? nurseDto = null;
+        EmployeeDto.NurseResponse? nurseDto = null;
         if (income.Nurse != null)
         {
-            nurseDto = new IncomeDto.NurseDto(
+            nurseDto = new EmployeeDto.NurseResponse(
                 income.Nurse.Id.ToString() ?? string.Empty,
                 income.Nurse.Name ?? string.Empty,
                 income.Nurse.LastName ?? string.Empty,
