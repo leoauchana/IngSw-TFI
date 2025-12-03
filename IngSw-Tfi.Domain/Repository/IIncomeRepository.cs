@@ -9,5 +9,5 @@ public interface IIncomeRepository
     Task<List<Income>?> GetAll();
     Task UpdateStatus(Guid id, IncomeStatus status);
     Task AddIncome(Income newIncome);
-    Task<Income> GetById(string idIncome);
+    Task<Income?> GetById(string idIncome);
 }

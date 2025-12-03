@@ -12,7 +12,7 @@ public class SocialWorkServiceApi : ISocialWorkServiceApi
     {
         _socialWorkRepository = socialWorkRepository;
     }
-    public async Task<SocialWork> ExistingSocialWork(string idSocialWork)
+    public async Task<SocialWork?> ExistingSocialWork(string idSocialWork)
     {
         var socialWorkFound = await _socialWorkRepository.GetById(idSocialWork);
         if (socialWorkFound == null) return null;

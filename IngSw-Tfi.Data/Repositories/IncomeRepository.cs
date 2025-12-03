@@ -16,8 +16,10 @@ public class IncomeRepository : IIncomeRepository
     }
     public async Task AddIncome(Income newIncome) => await _incomeDao.AddIncome(newIncome);
     public async Task<Income?> GetById(string idIncome)
+
     {
         var incomeData = await _incomeDao.GetById(idIncome);
+        if (incomeData == null) return null;
         return MapEntity(incomeData);
     }
     public async Task<List<Income>?> GetAll()
@@ -26,16 +28,18 @@ public class IncomeRepository : IIncomeRepository
         if (incomesData == null) return new List<Income>();
         return incomesData.Select(i => MapEntity(i)).ToList();
     }
-    public async Task<List<Income>?> GetAllEarrings()
-    {
-        var allIncomes = await GetAll();
-        return allIncomes?
-                    .Where(i => i.IncomeStatus == IncomeStatus.EARRING)
-                    .ToList();
-    }
     public async Task UpdateStatus(Guid id, IncomeStatus status)
     {
         await _incomeDao.UpdateIncomeStatus(id.ToString(), (int)status);
+    }
+    public async Task<List<Income>?> GetAllEarrings()
+    {
+        var incomesData = await _incomeDao.GetAll();
+        if (incomesData == null) return null;
+        var listIncomes = incomesData!.Select(i => MapEntity(i)).ToList();
+        return listIncomes
+                    .Where(i => i.IncomeStatus == IncomeStatus.EARRING)
+                    .ToList();
     }
     private Income MapEntity(Dictionary<string, object> value)
     {

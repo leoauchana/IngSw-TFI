@@ -26,7 +26,6 @@ public class SocialWorkController : ControllerBase
     public async Task<IActionResult> ValidateInsuranceAndMember1([FromBody] SocialWorkDto.Validate socialData)
     {
         var result = await _socialWorkService.ValidateInsuranceAndMember(socialData);
-        if (result == null) return BadRequest("Hubo un error al valdiar la obra social.");
         if (!result)
         {
             return Ok(new

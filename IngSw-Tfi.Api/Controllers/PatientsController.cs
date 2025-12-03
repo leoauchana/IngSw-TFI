@@ -8,7 +8,7 @@ namespace IngSw_Tfi.Api.Controllers;
 [ApiController]
 public class PatientsController : ControllerBase
 {
-    private readonly IPatientsService _patientsService;
+private readonly IPatientsService _patientsService;
     public PatientsController(IPatientsService patientsService)
     {
         _patientsService = patientsService;

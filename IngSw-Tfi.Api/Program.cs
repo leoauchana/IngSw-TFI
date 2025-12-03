@@ -1,10 +1,11 @@
+
+using System.Text;
 using IngSw_Tfi.Api.Middlewares;
 using IngSw_Tfi.Application;
 using IngSw_Tfi.Data;
 using IngSw_Tfi.Transversal;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 namespace IngSw_Tfi.Api
 {
@@ -104,5 +105,5 @@ namespace IngSw_Tfi.Api
 
             app.Run();
         }
+        }
     }
-}

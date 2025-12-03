@@ -1,21 +1,21 @@
-﻿using IngSw_Tfi.Application.DTOs;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using IngSw_Tfi.Application.DTOs;
 using IngSw_Tfi.Application.Exceptions;
 using IngSw_Tfi.Application.Interfaces;
 using IngSw_Tfi.Domain.Entities;
 using IngSw_Tfi.Domain.Repository;
 using IngSw_Tfi.Domain.ValueObjects;
-using Org.BouncyCastle.Crypto.Generators;
 using Microsoft.Extensions.Configuration;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Org.BouncyCastle.Crypto.Generators;
 
 namespace IngSw_Tfi.Application.Services;
 
 public class AuthService : IAuthService
 {
-    private readonly IEmployeeRepository _employeeRepository;
+private readonly IEmployeeRepository _employeeRepository;
     private readonly IConfiguration _configuration;
     public AuthService(IEmployeeRepository employeeRepository, IConfiguration configuration)
     {

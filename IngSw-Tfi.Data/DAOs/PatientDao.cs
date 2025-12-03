@@ -1,14 +1,12 @@
 ﻿using IngSw_Tfi.Data.Database;
 using IngSw_Tfi.Domain.Entities;
 using MySql.Data.MySqlClient;
-using System.Data;
 
 namespace IngSw_Tfi.Data.DAOs;
 
 public class PatientDao : DaoBase
 {
     public PatientDao(SqlConnection connection) : base(connection) { }
-
     public async Task AddPatient(Patient newPatient)
     {
         var query = """

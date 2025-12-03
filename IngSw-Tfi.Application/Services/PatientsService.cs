@@ -7,6 +7,7 @@ using IngSw_Tfi.Domain.Interfaces;
 using IngSw_Tfi.Domain.Repository;
 using IngSw_Tfi.Domain.ValueObjects;
 
+
 namespace IngSw_Tfi.Application.Services;
 
 public class PatientsService : IPatientsService
@@ -40,6 +41,7 @@ public class PatientsService : IPatientsService
             throw new ArgumentException("El campo 'Número' no puede ser omitido o exceder el límite permitido.");
 
         Affiliate? affiliation = null;
+        //bool oneCompleted = string.IsNullOrEmpty(patientData.idSocialWork) != string.IsNullOrEmpty(patientData.affiliateNumber);
         bool faltaUno =
             string.IsNullOrEmpty(patientData.idSocialWork) ^
             string.IsNullOrEmpty(patientData.affiliateNumber);
@@ -52,6 +54,8 @@ public class PatientsService : IPatientsService
             var socialWorkFound = await _socialWorkServiceApi.ExistingSocialWork(patientData.idSocialWork);
             if (socialWorkFound == null)
                 throw new BusinessConflicException("La obra social no existe, por lo tanto no se puede registrar al paciente.");
+            //if (!await _socialWorkServiceApi.IsAffiliated(patientData.affiliateNumber))
+            //    throw new BusinessConflicException("El paciente no es afiliado de la obra social, por lo tanto no se puede registrar al paciente.");
             affiliation = new Affiliate {SocialWork = socialWorkFound, AffiliateNumber = patientData.affiliateNumber };
         }
         var newPatient = new Patient
