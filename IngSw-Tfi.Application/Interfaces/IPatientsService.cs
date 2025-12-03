@@ -8,6 +8,5 @@ public interface IPatientsService
     Task<List<PatientDto.Response>?> GetByCuil(string cuilPatient);
     Task<List<PatientDto.Response>?> GetAll();
     Task<List<PatientDto.Response>> GetByDni(string dni);
-
     Task<PatientDto.Response?> GetById(int id);
 }

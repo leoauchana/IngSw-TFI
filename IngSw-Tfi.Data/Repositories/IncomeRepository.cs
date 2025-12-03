@@ -2,6 +2,7 @@
 using IngSw_Tfi.Domain.Entities;
 using IngSw_Tfi.Domain.Enums;
 using IngSw_Tfi.Domain.Repository;
+using IngSw_Tfi.Domain.ValueObjects;
 using System.Data;
 
 namespace IngSw_Tfi.Data.Repositories;
@@ -13,9 +14,8 @@ public class IncomeRepository : IIncomeRepository
     {
         _incomeDao = incomeDao;
     }
-    public async Task Add(Income newIncome) => await _incomeDao.AddIncome(newIncome);
-    public async Task AddTransactional(System.Data.IDbConnection conn, System.Data.IDbTransaction tx, Income newIncome) => await _incomeDao.AddIncome(newIncome, conn, tx);
-    public async Task Add(Income newIncome, System.Data.IDbConnection conn, System.Data.IDbTransaction? tx) => await _incomeDao.AddIncome(newIncome, conn, tx);
+    public async Task AddIncome(Income newIncome) => await _incomeDao.AddIncome(newIncome);
+    // public async Task AddTransactional(System.Data.IDbConnection conn, System.Data.IDbTransaction tx, Income newIncome) => await _incomeDao.AddIncome(newIncome, conn, tx);
     public async Task<Income?> GetById(int idIncome)
     {
         var incomeData = await _incomeDao.GetById(idIncome);
@@ -120,11 +120,30 @@ public class IncomeRepository : IIncomeRepository
             IncomeStatus = status,
             EmergencyLevel = emergencyLevel,
             Temperature = value.ContainsKey("temperature") && float.TryParse(value["temperature"]?.ToString(), out var temp) ? temp : null,
-            FrequencyCardiac = value.ContainsKey("heart_rate") && float.TryParse(value["heart_rate"]?.ToString(), out var hr) ? hr : null,
-            FrequencyRespiratory = value.ContainsKey("respiratory_rate") && float.TryParse(value["respiratory_rate"]?.ToString(), out var rr) ? rr : null,
-            SystolicRate = value.ContainsKey("systolic_rate") && float.TryParse(value["systolic_rate"]?.ToString(), out var sys) ? sys : null,
-            DiastolicRate = value.ContainsKey("diastolic_rate") && float.TryParse(value["diastolic_rate"]?.ToString(), out var dia) ? dia : null
+            FrequencyCardiac = value.ContainsKey("heart_rate") &&
+                   float.TryParse(value["heart_rate"]?.ToString(), out var hr)
+                   && hr >= 60 && hr <= 100
+                   ? new FrecuencyCardiac(hr)
+                   : null,
+            FrequencyRespiratory = value.ContainsKey("respiratory_rate") &&
+                       float.TryParse(value["respiratory_rate"]?.ToString(), out var rr)
+                       && rr >= 12 && rr <= 20
+                       ? new FrecuencyRespiratory(rr)
+                       : null
         };
+            BloodPressure? bloodPressure = null;
+
+        if (value.TryGetValue("systolic_rate", out var systolicObj) &&
+            value.TryGetValue("diastolic_rate", out var diastolicObj) &&
+            float.TryParse(systolicObj?.ToString(), out float systolicVal) &&
+            float.TryParse(diastolicObj?.ToString(), out float diastolicVal))
+        {
+            bloodPressure = new BloodPressure(
+                new FrecuencySystolic(systolicVal),
+                new FrecuencyDiastolic(diastolicVal)
+            );
+        }
+        income.BloodPressure = bloodPressure;
         return income;
     }
 }

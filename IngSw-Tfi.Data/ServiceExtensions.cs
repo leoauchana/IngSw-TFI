@@ -11,17 +11,17 @@ public static class ServiceExtensions
 {
     public static void AddDataServices(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddSingleton(new SqlConnection(configuration.GetConnectionString("MySqlDb")!));
+        services.AddSingleton(new SqlConnection(configuration.GetConnectionString("DbMySql")!));
         
         // Repositories
         services.AddScoped<IIncomeRepository, IncomeRepository>();
         services.AddScoped<IPatientRepository, PatientRepository>();
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
-        
+        services.AddScoped<ISocialWorkRepository, SocialWorkRepository>();
         // DAOs
         services.AddScoped<IncomeDao>();
         services.AddScoped<PatientDao>();
         services.AddScoped<EmployeeDao>();
-        services.AddScoped<HealthInsuranceDao>();
+        services.AddScoped<SocialWorkDao>();
     }
 }

@@ -27,11 +27,7 @@ public class IncomesController : ControllerBase
     {
         // Adaptamos para que sea async si el servicio lo requiere, o síncrono si no
         var listIncomes = await _incomesService.GetAllEarrings();
-        return Ok(new
-        {
-            Message = "Ingresos pendientes",
-            listIncomes
-        });
+        return Ok(listIncomes);
     }
 
     // GET /api/incomes/{id}
@@ -44,7 +40,7 @@ public class IncomesController : ControllerBase
     }
 
     // POST /api/incomes
-    [HttpPost]
+    [HttpPost("add")]
     public async Task<IActionResult> AddIncome([FromBody] IncomeDto.Request newIncome)
     {
         var incomeRegistered = await _incomesService.AddIncome(newIncome);

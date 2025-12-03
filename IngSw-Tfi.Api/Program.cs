@@ -14,22 +14,34 @@ namespace IngSw_Tfi.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
             builder.Services.AddControllers();
             
-            // Configurar rutas como case-insensitive para evitar errores 404
             builder.Services.Configure<RouteOptions>(options =>
             {
                 options.LowercaseUrls = true;
                 options.LowercaseQueryStrings = false;
             });
-            
-            // Register data and application layer services
+
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("Nurse", policy =>
+                {
+                    policy.RequireRole("Nurse");
+                });
+                options.AddPolicy("Doctor", policy =>
+                {
+                    policy.RequireRole("Doctor");
+                });
+                options.AddPolicy("All", policy =>
+                {
+                    policy.RequireRole("Nurse", "Doctor");
+                });
+            });
+
             builder.Services.AddDataServices(builder.Configuration);
             builder.Services.AddApplicationServices();
             builder.Services.AddTransversalServices();
 
-            // JWT Authentication
             var jwtKey = builder.Configuration["Jwt:Key"];
             var jwtIssuer = builder.Configuration["Jwt:Issuer"];
             var jwtAudience = builder.Configuration["Jwt:Audience"];
@@ -57,7 +69,6 @@ namespace IngSw_Tfi.Api
                 });
             }
 
-            // CORS (allow frontend origin configured in appsettings)
             var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? new[] { "http://localhost:5173" };
             builder.Services.AddCors(options =>
             {
@@ -70,13 +81,11 @@ namespace IngSw_Tfi.Api
                 });
             });
 
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -84,8 +93,6 @@ namespace IngSw_Tfi.Api
             }
 
             app.UseCors("AllowFrontend");
-
-            app.UseHttpsRedirection();
             
             app.UseMiddleware<ExceptionMiddleware>();
 

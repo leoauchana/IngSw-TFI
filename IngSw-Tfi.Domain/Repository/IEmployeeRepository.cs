@@ -6,4 +6,5 @@ public interface IEmployeeRepository
 {
     Task<Employee?> GetByEmail(string userEmail);
     Task<Employee?> Register(Employee employee);
+    Task<Employee?> GetById(string idEmployee);
 }

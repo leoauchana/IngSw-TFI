@@ -12,5 +12,6 @@ public static class ServicesExtension
         services.AddScoped<IPatientsService, PatientsService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddSingleton<IPriorityQueueService, PriorityQueueService>();
+        services.AddScoped<ISocialWorkService, SocialWorkService>();
     }
 }

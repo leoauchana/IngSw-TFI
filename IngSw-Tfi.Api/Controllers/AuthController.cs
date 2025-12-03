@@ -17,17 +17,18 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] UserDto.Request credentials)
     {
-            var user = await _authService.Login(credentials);
-            if (user == null) return Unauthorized(new { message = "Usuario o contraseña inválidos" });
-            return Ok(user);
+        var user = await _authService.Login(credentials);
+        if (user == null) return Unauthorized(new { message = "Usuario o contraseña inválidos" });
+        return Ok(user);
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] UserDto.RequestRegister newUser)
     {
-            var registered = await _authService.Register(newUser);
-            if (registered == null) return BadRequest(new { message = "No se pudo registrar el usuario." });
-            return Ok(registered);
+        var registered = await _authService.Register(newUser);
+        if (registered == null) return BadRequest(new { message = "No se pudo registrar el usuario." });
+        return Ok(registered);
+    }
 }
 
 

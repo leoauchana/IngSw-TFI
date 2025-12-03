@@ -2,8 +2,8 @@
 
 namespace IngSw_Tfi.Application.Interfaces;
 
-public interface IHealthInsuranceService
+public interface ISocialWorkService
 {
     Task<List<SocialWorkDto.Response>> GetAll();
-    Task<bool> ValidateInsuranceAndMember();
+    Task<bool> ValidateInsuranceAndMember(SocialWorkDto.Validate socialData);
 }

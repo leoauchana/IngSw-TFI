@@ -63,7 +63,6 @@ public class PatientsController : ControllerBase
         }
         if (patientsList == null) return BadRequest("Hubo un error al obtener los pacientes.");
         return Ok(patientsList);
-
     }
 
     // Nuevo endpoint: GET /api/patients/{id}

@@ -3,9 +3,11 @@ using IngSw_Tfi.Domain.Enums;
 
 namespace IngSw_Tfi.Domain.Repository;
 
-public interface IIncomeRepository : IRepository<Income>
+public interface IIncomeRepository
 {
     Task<List<Income>?> GetAllEarrings();
     Task<List<Income>?> GetAll();
     Task UpdateStatus(Guid id, IncomeStatus status);
+    Task AddIncome(Income newIncome);
+    Task<Income> GetById(int idIncome);
 }

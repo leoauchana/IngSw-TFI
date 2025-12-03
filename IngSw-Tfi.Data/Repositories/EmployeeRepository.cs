@@ -7,20 +7,27 @@ namespace IngSw_Tfi.Data.Repositories;
 public class EmployeeRepository : IEmployeeRepository
 {
     private readonly EmployeeDao _employeeDao;
-
     public EmployeeRepository(EmployeeDao employeeDao)
     {
         _employeeDao = employeeDao;
     }
-
     public async Task<Employee?> GetByEmail(string userEmail)
     {
-        var record = await _employeeDao.GetByEmail(userEmail);
-        if (record == null) return null;
-
+        var employeeFound = await _employeeDao.GetByEmail(userEmail);
+        if (employeeFound == null) return null;
+        return MapEntity(employeeFound);
+    }
+    public async Task<Employee?> GetById(string idEmployee)
+    {
+        var employeeFound = await _employeeDao.GetById(idEmployee);
+        if (employeeFound == null) return null;
+        return MapEntity(employeeFound);
+    }
+    private Employee MapEntity(Dictionary<string, object> record)
+    {
         var idNurse = record.GetValueOrDefault("id_nurse");
         var idDoctor = record.GetValueOrDefault("id_doctor");
-        
+
         Employee employee;
         string? targetId = null;
 
@@ -59,7 +66,7 @@ public class EmployeeRepository : IEmployeeRepository
         employee.Name = Convert.ToString(firstName);
         employee.LastName = Convert.ToString(lastName);
         employee.PhoneNumber = Convert.ToString(phone);
-        employee.Registration = Convert.ToString(registration);
+        employee.Registration = Convert.ToString(registration) ?? string.Empty;
         employee.Cuil = !string.IsNullOrEmpty(Convert.ToString(cuil)) ? IngSw_Tfi.Domain.ValueObjects.Cuil.Create(Convert.ToString(cuil)!) : null;
 
         employee.User = new User
@@ -67,10 +74,8 @@ public class EmployeeRepository : IEmployeeRepository
             Email = Convert.ToString(record.GetValueOrDefault("email")),
             Password = Convert.ToString(record.GetValueOrDefault("password"))
         };
-
         return employee;
     }
-
     public Task<Employee?> Register(Employee employee)
     {
         throw new NotImplementedException();

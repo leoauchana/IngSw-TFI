@@ -9,12 +9,12 @@ public class IncomeDto
         string report,
         EmergencyLevel emergencyLevel,
         float temperature,
-        float frecyencyCardiac,
+        float frecuencyCardiac,
         float frecuencyRespiratory,
         float frecuencySystolic,
         float frecuencyDiastolic,
-        JsonElement patient,
-        JsonElement nurse
+        string idPatient,
+        string idNurse
     );
     // Response contiene el DTO anidado de paciente y datos de la admisión
     public record Response(

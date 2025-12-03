@@ -50,6 +50,24 @@ public abstract class DaoBase
             return await cmd.ExecuteNonQueryAsync();
         }
     }
+    protected async Task ExecuteInTransaction(Func<MySqlConnection, MySqlTransaction, Task> action)
+    {
+        using var conn = _connection.CreateConnection();
+        await conn.OpenAsync();
+
+        using var trans = await conn.BeginTransactionAsync();
+
+        try
+        {
+            await action((MySqlConnection)conn, (MySqlTransaction)trans);
+            await trans.CommitAsync();
+        }
+        catch
+        {
+            await trans.RollbackAsync();
+            throw;
+        }
+    }
 
     // Overloads that use an existing connection and transaction (do not dispose connection)
     protected async Task<List<Dictionary<string, object>>?> ExecuteReader(IDbConnection conn, IDbTransaction tx, string query, params MySqlParameter[] parameters)

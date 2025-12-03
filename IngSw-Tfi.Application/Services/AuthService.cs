@@ -109,7 +109,7 @@ public class AuthService : IAuthService
     {
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString() ?? string.Empty),
+            new Claim(ClaimTypes.NameIdentifier, user.User!.Id.ToString() ?? string.Empty),
             new Claim(ClaimTypes.Name, user.Name ?? string.Empty),
             new Claim(ClaimTypes.Role, user.GetType().Name ?? string.Empty)
         };

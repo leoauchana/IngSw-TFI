@@ -37,88 +37,47 @@ public class IncomeDao : DaoBase
     }
     public async Task AddIncome(Income newIncome)
     {
-        using (var conn = (System.Data.IDbConnection)_connection.CreateConnection())
+        await ExecuteInTransaction(async (conn, tx) =>
         {
-            conn.Open();
-            using (var tx = conn.BeginTransaction())
-            {
-                try
-                {
-                    await AddIncome(newIncome, conn, tx);
-                    tx.Commit();
-                }
-                catch
-                {
-                    try { tx.Rollback(); } catch { }
-                    throw;
-                }
-            }
-        }
+            await Add(newIncome, conn, tx);
+        });
     }
 
-    public async Task AddIncome(Income newIncome, System.Data.IDbConnection conn, System.Data.IDbTransaction? tx)
+    public async Task Add(Income newIncome, MySqlConnection conn, MySqlTransaction tx)
     {
-        // Discover existing columns to be resilient with DB variants
-        var columnsInfo = await ExecuteReader("SHOW COLUMNS FROM admission", conn, tx);
-        var existingCols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        if (columnsInfo != null)
-        {
-            foreach (var c in columnsInfo)
-            {
-                if (c.TryGetValue("Field", out var fld) && fld != null)
-                    existingCols.Add(fld.ToString()!);
-            }
-        }
+        var query = """
+        INSERT INTO admission (
+            id_admission, nurse_id_nurse, patient_id_patient,
+            status, level, start_date, end_date_time,
+            temperature, heart_rate, respiratory_rate,
+            report, systolic_rate, diastolic_rate
+        )
+        VALUES (
+            @IdAdmission, @IdNurse, @IdPatient,
+            @IncomeStatus, @EmergencyLevel, @StartDate, @EndDate,
+            @Temperature, @HeartRate, @RespiratoryRate,
+            @Report, @SystolicRate, @DiastolicRate
+        );
+        """;
 
-        var id = Guid.NewGuid().ToString();
-        var patientIdParam = newIncome.Patient?.Id?.ToString();
-        var nurseIdParam = newIncome.Nurse?.Id?.ToString();
-        
-        // Usar zona horaria de Argentina (UTC-3)
-        var argentinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Argentina/Buenos_Aires");
-        var startDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, argentinaTimeZone);
-        var endDateTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, argentinaTimeZone);
-        
-        var level = newIncome.EmergencyLevel.HasValue ? ((int)newIncome.EmergencyLevel.Value + 1) : 1;
-        var status = (int?)(newIncome.IncomeStatus.HasValue ? (int)newIncome.IncomeStatus.Value : 0) ?? 0;
+        using var cmd = new MySqlCommand(query, conn, tx);
 
-        var insertCols = new List<string>();
-        var insertParams = new List<string>();
-        var parametersList = new List<MySqlParameter>();
+        cmd.Parameters.AddWithValue("@IdAdmission", newIncome.Id);
+        cmd.Parameters.AddWithValue("@IdNurse", newIncome.Nurse!.Id);
+        cmd.Parameters.AddWithValue("@IdPatient", newIncome.Patient!.Id);
+        cmd.Parameters.AddWithValue("@IncomeStatus", newIncome.IncomeStatus);
+        cmd.Parameters.AddWithValue("@EmergencyLevel", newIncome.EmergencyLevel);
+        cmd.Parameters.AddWithValue("@StartDate", newIncome.IncomeDate);
+        cmd.Parameters.AddWithValue("@EndDate", newIncome.IncomeDate);
+        cmd.Parameters.AddWithValue("@Temperature", newIncome.Temperature);
+        cmd.Parameters.AddWithValue("@HeartRate", newIncome.FrequencyCardiac!.Value);
+        cmd.Parameters.AddWithValue("@RespiratoryRate", newIncome.FrequencyRespiratory!.Value);
+        cmd.Parameters.AddWithValue("@Report", newIncome.Description);
+        cmd.Parameters.AddWithValue("@SystolicRate", newIncome.BloodPressure!.FrecuencySystolic!.Value);
+        cmd.Parameters.AddWithValue("@DiastolicRate", newIncome.BloodPressure!.FrecuencyDiastolic!.Value);
 
-        void AddIfExists(string colName, string paramName, object? value)
-        {
-            if (existingCols.Contains(colName))
-            {
-                insertCols.Add(colName);
-                insertParams.Add(paramName);
-                parametersList.Add(new MySqlParameter(paramName, value ?? (object)DBNull.Value));
-            }
-        }
-
-        AddIfExists("id_admission", "@Id", id);
-        AddIfExists("nurse_id_nurse", "@NurseId", nurseIdParam);
-        AddIfExists("patient_id_patient", "@PatientId", patientIdParam);
-        AddIfExists("status", "@Status", status);
-        AddIfExists("level", "@Level", level);
-        AddIfExists("start_date", "@StartDate", startDate);
-        AddIfExists("end_date_time", "@EndDateTime", endDateTime);
-        AddIfExists("temperature", "@Temperature", newIncome.Temperature);
-        AddIfExists("heart_rate", "@HeartRate", newIncome.FrequencyCardiac);
-        AddIfExists("respiratory_rate", "@RespRate", newIncome.FrequencyRespiratory);
-        AddIfExists("report", "@Description", newIncome.Description ?? string.Empty);
-        AddIfExists("systolic_rate", "@Systolic", newIncome.SystolicRate);
-        AddIfExists("diastolic_rate", "@Diastolic", newIncome.DiastolicRate);
-        AddIfExists("blood_pressure", "@BloodPressure", newIncome.SystolicRate ?? (object)DBNull.Value);
-
-        if (insertCols.Count == 0) throw new InvalidOperationException("No known columns to insert into admission table.");
-
-        var columnsSql = string.Join(", ", insertCols);
-        var paramsSql = string.Join(", ", insertParams);
-        var sql = $"INSERT INTO admission ({columnsSql}) VALUES ({paramsSql})";
-        await ExecuteNonQuery(sql, conn, tx, parametersList.ToArray());
+        await cmd.ExecuteNonQueryAsync();
     }
-
     public async Task UpdateIncomeStatus(string idAdmission, int newStatus)
     {
         var sql = "UPDATE admission SET status = @Status WHERE id_admission = @Id";

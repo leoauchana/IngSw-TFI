@@ -12,7 +12,7 @@ public class SqlConnection
             _connectionString = connectionString;
         }
 
-        public IDbConnection CreateConnection()
+        public MySqlConnection CreateConnection()
         {
             return new MySqlConnection(_connectionString);
         }

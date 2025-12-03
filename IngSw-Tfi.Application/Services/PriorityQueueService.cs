@@ -46,4 +46,18 @@ public class PriorityQueueService : IPriorityQueueService
                          .ToList();
         }
     }
+
+    public bool HasActiveIncome(Guid patientId)
+    {
+        lock (_lock)
+        {
+            return _queue.UnorderedItems.Any(x =>
+                x.Element.Patient?.Id == patientId &&
+                (x.Element.IncomeStatus == IncomeStatus.EARRING ||
+                 x.Element.IncomeStatus == IncomeStatus.IN_PROCESS ||
+                 x.Element.IncomeStatus == null)
+            );
+        }
+    }
+
 }

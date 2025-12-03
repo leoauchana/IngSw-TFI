@@ -1,10 +1,16 @@
 ﻿using IngSw_Tfi.Domain.Common;
 using IngSw_Tfi.Domain.Enums;
+using IngSw_Tfi.Domain.ValueObjects;
 
 namespace IngSw_Tfi.Domain.Entities;
 
 public class Income : EntityBase
 {
+    public Income()
+    {
+        Id = Guid.NewGuid();
+    }
+    public string? Report { get; set; }
     public Attention? Attention { get; set; }
     public Patient? Patient { get; set; }
     public Nurse? Nurse { get; set; }
@@ -12,13 +18,8 @@ public class Income : EntityBase
     public IncomeStatus? IncomeStatus { get; set; }
     public string? Description { get; set; }
     public DateTime? IncomeDate { get; set; }
-
-    // Signos vitales / métricas
     public float? Temperature { get; set; }
-    public float? FrequencyCardiac { get; set; }
-    public float? FrequencyRespiratory { get; set; }
-    public float? SystolicRate { get; set; }
-    public float? DiastolicRate { get; set; }
-
-    // TODO: Completar propiedades y determinar si aplicar patron value object.
+    public FrecuencyCardiac? FrequencyCardiac { get; set; }
+    public FrecuencyRespiratory? FrequencyRespiratory { get; set; }
+    public BloodPressure? BloodPressure { get;set; }
 }
