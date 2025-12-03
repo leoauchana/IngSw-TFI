@@ -2,7 +2,6 @@
 using IngSw_Tfi.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using static IngSw_Tfi.Application.DTOs.IncomeDto;
 
 namespace IngSw_Tfi.Api.Controllers;
 
