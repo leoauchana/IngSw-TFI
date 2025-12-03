@@ -24,42 +24,7 @@ public class IncomesService : IIncomesService
         _priorityQueueService = priorityQueueService;
         _employeeRepository = employeeRepository;
     }
-    public async Task<IncomeDto.Response?> AddIncome(IncomeDto.Request newIncome)
-    {
-        // Verificar que existe la enfermera registrada
-        var nurseFound = await _employeeRepository.GetById(newIncome.idNurse);
-        if (nurseFound == null) throw new EntityNotFoundException($"No se encontro el empleado autenticado de id {newIncome.idNurse}");
-        // Verificar que exista el paciente registrado
-        var patientFound = await _patientRepository.GetByGuid(newIncome.idPatient);
-        if (patientFound == null) throw new EntityNotFoundException($"No se encontró ningún paciente con cuil {newIncome.idPatient}");
-        // Verificar que el paciente no tenga un ingreso activo
-        var hasActive = _priorityQueueService.HasActiveIncome(Guid.Parse(newIncome.idPatient));
-        if (hasActive) throw new BusinessConflicException("El paciente ya tiene un ingreso activo.");
-
-        var argentinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Argentina/Buenos_Aires");
-        var argentinaTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, argentinaTimeZone);
-
-        var income = new Income
-        {
-            Description = newIncome.report,
-            EmergencyLevel = newIncome.emergencyLevel,
-            IncomeDate = argentinaTime,
-            Temperature = newIncome.temperature,
-            FrequencyCardiac = new FrecuencyCardiac(newIncome.frecuencyCardiac),
-            FrequencyRespiratory = new FrecuencyRespiratory(newIncome.frecuencyRespiratory),
-            BloodPressure = new BloodPressure(new FrecuencySystolic(newIncome.frecuencySystolic),
-                            new FrecuencyDiastolic(newIncome.frecuencyDiastolic)),
-            IncomeStatus = IncomeStatus.EARRING,
-            Patient = patientFound,
-            Nurse = (Nurse)nurseFound
-        };
-
-        await _incomeRepository.AddIncome(income);
-        _priorityQueueService.Enqueue(income);
-        return MapToDto(income);
-    }
-
-    public async Task<IncomeDto.Response?> AddIncomeT(string idUser, IncomeDto.RequestT newIncome)
+    public async Task<IncomeDto.Response?> AddIncome(string idUser, IncomeDto.RequestT newIncome)
     {
         // Verificar que existe la enfermera registrada
         var nurseFound = await _employeeRepository.GetById(idUser);
@@ -93,14 +58,7 @@ public class IncomesService : IIncomesService
         _priorityQueueService.Enqueue(income);
         return MapToDto(income);
     }
-
-    public async Task<List<IncomeDto.Response>?> GetAllEarringss()
-    {
-        var incomesEarrings = await _incomeRepository.GetAllEarrings();
-        if (incomesEarrings == null || incomesEarrings.Count == 0) return new List<IncomeDto.Response>();
-        return incomesEarrings.Select(MapToDto).ToList();
-    }
-    public async Task<List<IncomeDto.Response>?> GetAllEarrings()
+    public List<IncomeDto.Response>? GetAllEarrings()
     {
         var incomesEarrings = _priorityQueueService.GetAll();
         if (incomesEarrings == null || !incomesEarrings.Any()) return new List<IncomeDto.Response>();
@@ -117,27 +75,6 @@ public class IncomesService : IIncomesService
         var incomes = await _incomeRepository.GetAll();
         if (incomes == null || incomes.Count == 0) return new List<IncomeDto.Response>();
         return incomes.Select(MapToDto).ToList();
-    }
-    public async Task<IncomeDto.Response?> UpdateIncomeStatus(string incomeId, string newStatus)
-    {
-        if (!Guid.TryParse(incomeId, out var guid)) throw new ArgumentException("ID de ingreso inválido");
-
-        var allIncomes = await _incomeRepository.GetAll();
-        var income = allIncomes?.FirstOrDefault(i => i.Id == guid);
-
-        if (income == null) return null;
-
-        IncomeStatus status = newStatus switch
-        {
-            "PENDIENTE" => IncomeStatus.EARRING,
-            "EN_PROCESO" => IncomeStatus.IN_PROCESS,
-            "FINALIZADO" => IncomeStatus.FINISHED,
-            _ => throw new BusinessConflicException($"Estado '{newStatus}' no válido")
-        };
-
-        income.IncomeStatus = status;
-        await _incomeRepository.UpdateStatus(income.Id, status);
-        return MapToDto(income);
     }
     private IncomeDto.Response MapToDto(Income income)
     {

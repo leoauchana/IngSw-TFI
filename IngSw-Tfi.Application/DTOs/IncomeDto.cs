@@ -42,6 +42,7 @@ public class IncomeDto
         NurseDto? enfermera
     );
 
+    public record UpdateStatusRequest(string estado);
     public record EmergencyLevelDto(int id, string label);
     public record StatusDto(string id, string label);
     public record NurseDto(string id, string nombre, string apellido, string? matricula);

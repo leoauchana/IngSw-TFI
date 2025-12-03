@@ -2,6 +2,7 @@
 using IngSw_Tfi.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using static IngSw_Tfi.Application.DTOs.IncomeDto;
 
 namespace IngSw_Tfi.Api.Controllers;
 
@@ -24,9 +25,9 @@ public class IncomesController : ControllerBase
     }
 
     [HttpGet("getAllEarrings")]
-    public async Task<IActionResult> GetAllEarrings()
+    public IActionResult GetAllEarrings()
     {
-        var listIncomes = await _incomesService.GetAllEarrings();
+        var listIncomes =  _incomesService.GetAllEarrings();
         return Ok(listIncomes);
     }
 
@@ -45,7 +46,7 @@ public class IncomesController : ControllerBase
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userId == null) return BadRequest("No se puedo obtener el ID del empleado.");
-        var incomeRegistered = await _incomesService.AddIncomeT(userId, newIncome);
+        var incomeRegistered = await _incomesService.AddIncome(userId, newIncome);
         if (incomeRegistered == null) return BadRequest();
         return Ok(new
         {
@@ -53,22 +54,4 @@ public class IncomesController : ControllerBase
             incomeRegistered
         });
     }
-
-    // PUT /api/incomes/{id}
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateIncomeStatus(string id, [FromBody] UpdateStatusRequest request)
-    {
-        try
-        {
-            var result = await _incomesService.UpdateIncomeStatus(id, request.estado);
-            if (result == null) return NotFound(new { Message = "Ingreso no encontrado" });
-            return Ok(new { Message = "Estado actualizado correctamente", data = result });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
-    }
-
-    public record UpdateStatusRequest(string estado);
 }

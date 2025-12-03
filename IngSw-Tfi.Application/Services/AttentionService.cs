@@ -27,6 +27,7 @@ public class AttentionService : IAttentionService
         var doctorFound = await _employeeRepository.GetById(idDoctor);
         if (doctorFound == null) throw new EntityNotFoundException("No se encontró al doctor autenticado.");
         var incomeFound = await _incomeRepository.GetById(newAttention.idIncome);
+        if (incomeFound.IncomeStatus != IncomeStatus.IN_PROCESS) throw new BusinessConflicException("El ingreso no estaba siendo atendido.");
         if (incomeFound == null) throw new EntityNotFoundException("No se encontró el ingreso asociado a la atención.");
         var attention = new Attention
         {
@@ -34,7 +35,7 @@ public class AttentionService : IAttentionService
             Income = incomeFound,
             Doctor = (Doctor)doctorFound
         };
-        var incomeRegistered = await _attentionRepository.AddAttention(attention);
+        await _attentionRepository.AddAttention(attention);
         await _incomeRepository.UpdateStatus(Guid.Parse(newAttention.idIncome), IncomeStatus.FINISHED);
         return new AttentionDto.Response();
     }

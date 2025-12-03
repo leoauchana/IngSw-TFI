@@ -4,5 +4,5 @@ namespace IngSw_Tfi.Domain.Repository;
 
 public interface IAttentionRepository
 {
-    Task<Attention> AddAttention(Attention newAttention);
+    Task AddAttention(Attention newAttention);
 }

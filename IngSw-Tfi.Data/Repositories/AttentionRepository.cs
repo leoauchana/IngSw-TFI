@@ -11,8 +11,5 @@ public class AttentionRepository : IAttentionRepository
     {
         _attentionDao = attentionDao;
     }
-    public Task<Attention> AddAttention(Attention newAttention)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task AddAttention(Attention newAttention) => await _attentionDao.AddAttention(newAttention);
 }
