@@ -15,7 +15,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] UserDto.Request credentials)
+    public async Task<IActionResult> Login([FromBody] UserDto.RequestUser credentials)
     {
         var user = await _authService.Login(credentials);
         if (user == null) return Unauthorized(new { message = "Usuario o contraseña inválidos" });

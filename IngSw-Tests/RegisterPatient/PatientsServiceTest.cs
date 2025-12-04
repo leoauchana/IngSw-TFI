@@ -24,19 +24,25 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenTheHealthcareSystemExistsWithSocialWorkExisting_ShouldCreateThePatient()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var HealthCare = new SocialWork
+        {
+            Name = "OSPE",
+        };
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
             idSocialWork: "OSPE",
             affiliateNumber: "4798540152"
         );
-        _socialWorkServiceApi.ExistingSocialWork("OSPE")
-            .Returns(Task.FromResult(true));
+        _socialWorkServiceApi.ExistingSocialWork("OSPE")!
+            .Returns(Task.FromResult(HealthCare));
         _socialWorkServiceApi.IsAffiliated("4798540152")
         .Returns(Task.FromResult(true));
         // Act
@@ -55,11 +61,13 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenTheHealthcareSystemExistsWithoutSocialWork_ShouldCreateThePatient()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
@@ -81,19 +89,21 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenTheHealthcareSystemExistsWithSocialWorkInexisting_ShouldNotCreateThePatient()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
             idSocialWork: "Subsidio",
             affiliateNumber: "4798540152"
         );
-        _socialWorkServiceApi.ExistingSocialWork("Subsidio")
-            .Returns(Task.FromResult(false));
+        _socialWorkServiceApi.ExistingSocialWork("Subsidio")!
+            .Returns(Task.FromResult<SocialWork?>(null));
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<BusinessConflicException>(
@@ -108,19 +118,26 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenTheHealthcareSystemExistsWithSocialWorkExistingButWitouthAffiliation_ShouldNotCreateThePatient()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var HealthCare = new SocialWork
+        {
+            Name = "Subsidio",
+        };
+
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
             idSocialWork: "Subsidio",
             affiliateNumber: "4798540152"
         );
-        _socialWorkServiceApi.ExistingSocialWork("Subsidio")
-            .Returns(Task.FromResult(true));
+        _socialWorkServiceApi.ExistingSocialWork("Subsidio")!
+            .Returns(Task.FromResult(HealthCare));
         _socialWorkServiceApi.IsAffiliated("4798540152")
             .Returns(Task.FromResult(false));
 
@@ -139,11 +156,13 @@ public class PatientsServiceTest
         // Arrange
 
         // Caso 1: Falta el número de afiliado, pero se indica la obra social
-        var patientDtoMissingAffiliate = new PatientDto.Request(
+        var patientDtoMissingAffiliate = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
@@ -151,11 +170,13 @@ public class PatientsServiceTest
             affiliateNumber: null
         );
         // Caso 2: Falta la obra social, pero se indica el número de afiliado
-        var patientDtoMissingSocialWork = new PatientDto.Request(
+        var patientDtoMissingSocialWork = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
@@ -183,19 +204,26 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenCuilIsNotValid_ThenShouldThrowExceptionAndNotCreateThePatient()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var HealthCare = new SocialWork
+        {
+            Name = "OSPE",
+        };
+
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "45750673",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
             idSocialWork: "OSPE",
             affiliateNumber: "4798540152"
         );
-        _socialWorkServiceApi.ExistingSocialWork("OSPE")
-        .Returns(Task.FromResult(true));
+        _socialWorkServiceApi.ExistingSocialWork("OSPE")!
+        .Returns(Task.FromResult(HealthCare));
         _socialWorkServiceApi.IsAffiliated("4798540152")
         .Returns(Task.FromResult(true));
 
@@ -212,19 +240,26 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenCuilIsNull_ThenShouldThrowExceptionAndNotCreateThePatient()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var HealthCare = new SocialWork
+        {
+            Name = "OSPE",
+        };
+
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: null!,
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
             idSocialWork: "OSPE",
             affiliateNumber: "4798540152"
         );
-        _socialWorkServiceApi.ExistingSocialWork("OSPE")
-        .Returns(Task.FromResult(true));
+        _socialWorkServiceApi.ExistingSocialWork("OSPE")!
+        .Returns(Task.FromResult(HealthCare));
         _socialWorkServiceApi.IsAffiliated("4798540152")
         .Returns(Task.FromResult(true));
         // Act & Assert
@@ -240,19 +275,26 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenCuilIsWhiteSpace_ThenShouldThrowExceptionAndNotCreateThePatient()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var HealthCare = new SocialWork
+        {
+            Name = "OSPE",
+        };
+
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "   ",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
             idSocialWork: "OSPE",
             affiliateNumber: "4798540152"
         );
-        _socialWorkServiceApi.ExistingSocialWork("OSPE")
-        .Returns(Task.FromResult(true));
+        _socialWorkServiceApi.ExistingSocialWork("OSPE")!
+        .Returns(Task.FromResult(HealthCare));
         _socialWorkServiceApi.IsAffiliated("4798540152")
         .Returns(Task.FromResult(true));
 
@@ -267,11 +309,13 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenPatientAlreadyExists_ThenShouldThrowExceptionAndNotCreateThePatient()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
@@ -406,11 +450,13 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenLastNameIsOmitted_ShouldArgumentException()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
@@ -431,11 +477,13 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenLastNameIsWhiteSpace_ShouldArgumentException()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "  ",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
@@ -456,11 +504,13 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenLastNameIsNull_ShouldArgumentException()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: null!,
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
@@ -481,11 +531,13 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenNameIsOmitted_ShouldArgumentException()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
@@ -506,11 +558,13 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenNameIsWhiteSpace_ShouldArgumentException()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "   ",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
@@ -531,11 +585,13 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenNameIsNull_ShouldArgumentException()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: null!,
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
@@ -556,11 +612,13 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenStreetIsOmitted_ShouldArgumentException()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
@@ -581,11 +639,13 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenStreetIsWhiteSpace_ShouldArgumentException()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "   ",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
@@ -606,11 +666,13 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenStreetIsNull_ShouldArgumentException()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: null!,
             numberDomicilie: 356,
             localityDomicilie: "CABA",
@@ -631,12 +693,14 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenNumberIsOmitted_ShouldArgumentException()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
             streetDomicilie: "Avenue Nine Of July",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             numberDomicilie: 0,
             localityDomicilie: "CABA",
             idSocialWork: "OSPE",
@@ -656,11 +720,13 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenNumberIsNegative_ShouldArgumentException()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: -356,
             localityDomicilie: "CABA",
@@ -681,17 +747,20 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenNumberIsTooHigh_ShouldArgumentException()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
-            numberDomicilie: 10000,
+            numberDomicilie: 100000,
             localityDomicilie: "CABA",
             idSocialWork: "OSPE",
             affiliateNumber: "4798540152"
         );
+
 
         // Act
         var exception = await Assert.ThrowsAsync<ArgumentException>(
@@ -701,16 +770,19 @@ public class PatientsServiceTest
         // Assert
         Assert.NotNull(exception);
         Assert.Equal("El campo 'Número' no puede ser omitido o exceder el límite permitido.", exception.Message);
+        await _patientsRepository.Received(0).AddPatient(Arg.Any<Patient>());
     }
     [Fact]
     public async Task AddPatient_WhenLocalityIsOmitted_ShouldArgumentException()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "",
@@ -731,11 +803,13 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenLocalityIsWhiteSpace_ShouldArgumentException()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "   ",
@@ -756,11 +830,13 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenLocalityIsNull_ShouldArgumentException()
     {
         // Arrange
-        var patientDto = new PatientDto.Request(
+        var patientDto = new PatientDto.RequestPatient(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: null!,
@@ -776,5 +852,59 @@ public class PatientsServiceTest
         // Assert
         Assert.NotNull(exception);
         Assert.Equal("El campo 'Localidad' no puede ser omitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenBirthDateIsNotValid_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.RequestPatient(
+            cuilPatient: "20-45750673-8",
+            namePatient: "Lautaro",
+            lastNamePatient: "Lopez",
+            email: "lautalopez@gmail.com",
+            birthDate: DateTime.MinValue,
+            phone: "3814050905",
+            streetDomicilie: "Avenue Nine Of July",
+            numberDomicilie: 356,
+            localityDomicilie: "CABA",
+            idSocialWork: "OSPE",
+            affiliateNumber: "4798540152"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Fecha de nacimiento' es inválido o está fuera del rango permitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenPhoneIsWhiteSpace_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.RequestPatient(
+            cuilPatient: "20-45750673-8",
+            namePatient: "Lautaro",
+            lastNamePatient: "Lopez",
+            email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "   ",
+            streetDomicilie: "Avenue Nine Of July",
+            numberDomicilie: 356,
+            localityDomicilie: "CABA",
+            idSocialWork: "OSPE",
+            affiliateNumber: "4798540152"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Telefono' no puede ser omitido.", exception.Message);
     }
 }
