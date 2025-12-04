@@ -14,5 +14,6 @@ public static class ServicesExtension
         services.AddSingleton<IPriorityQueueService, PriorityQueueService>();
         services.AddScoped<ISocialWorkService, SocialWorkService>();
         services.AddScoped<IAttentionService, AttentionService>();
+        services.AddHostedService<QueueRecoveryService>();
     }
 }

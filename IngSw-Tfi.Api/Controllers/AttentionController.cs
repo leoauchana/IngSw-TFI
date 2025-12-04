@@ -1,6 +1,7 @@
 ﻿using IngSw_Tfi.Application.DTOs;
 using IngSw_Tfi.Application.Interfaces;
 using IngSw_Tfi.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using static IngSw_Tfi.Api.Controllers.IncomesController;
@@ -17,6 +18,7 @@ public class AttentionController : ControllerBase
     {
         _attentionService = attentionService;
     }
+    [Authorize(Policy = "Doctor")]
     [HttpPost]
     public async Task<IActionResult> AddAttention([FromBody] AttentionDto.Request newIncome)
     {
@@ -30,6 +32,7 @@ public class AttentionController : ControllerBase
             attentionRegistered
         });
     }
+    [Authorize(Policy = "All")]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateIncomeStatus(string id, [FromBody] UpdateStatusRequest request)
     {
@@ -37,6 +40,7 @@ public class AttentionController : ControllerBase
             if (result == null) return NotFound(new { message = "Ingreso no encontrado" });
             return Ok(new { Message = "Estado actualizado correctamente", data = result });
     }
+    [Authorize(Policy = "All")]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -44,4 +48,13 @@ public class AttentionController : ControllerBase
         if (attentionsRegistered == null) return BadRequest("Hubo un error al obtener las atenciones registradas.");
         return Ok(attentionsRegistered);
     }
+    [Authorize(Policy = "All")]
+    [HttpGet("getById/{id}")]
+    public async Task<IActionResult> GetById(string id)
+    {
+        var attentionsRegistered = await _attentionService.GetById(id);
+        if (attentionsRegistered == null) return BadRequest("Hubo un error al obtener la atencion registrada.");
+        return Ok(attentionsRegistered);
+    }
+
 }

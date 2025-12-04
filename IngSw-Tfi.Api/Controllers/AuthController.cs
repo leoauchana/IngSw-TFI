@@ -1,5 +1,6 @@
 ﻿using IngSw_Tfi.Application.DTOs;
 using IngSw_Tfi.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IngSw_Tfi.Api.Controllers;
@@ -13,7 +14,7 @@ public class AuthController : ControllerBase
     {
         _authService = authService;
     }
-
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] UserDto.Request credentials)
     {

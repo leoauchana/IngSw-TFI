@@ -5,7 +5,6 @@ using IngSw_Tfi.Domain.Entities;
 using IngSw_Tfi.Domain.Enums;
 using IngSw_Tfi.Domain.Repository;
 using IngSw_Tfi.Domain.ValueObjects;
-using ZstdSharp;
 
 namespace IngSw_Tfi.Application.Services;
 
@@ -16,7 +15,7 @@ public class IncomesService : IIncomesService
     private readonly IPriorityQueueService _priorityQueueService;
     private readonly IEmployeeRepository _employeeRepository;
 
-    public IncomesService(IIncomeRepository incomeRepository, IPatientRepository patientRepository, 
+    public IncomesService(IIncomeRepository incomeRepository, IPatientRepository patientRepository,
         IPriorityQueueService priorityQueueService, IEmployeeRepository employeeRepository)
     {
         _incomeRepository = incomeRepository;
@@ -33,7 +32,9 @@ public class IncomesService : IIncomesService
         var patientFound = await _patientRepository.GetByGuid(newIncome.idPatient);
         if (patientFound == null) throw new EntityNotFoundException($"No se encontró ningún paciente con cuil {newIncome.idPatient}");
         // Verificar que el paciente no tenga un ingreso activo
-        var hasActive = _priorityQueueService.HasActiveIncome(Guid.Parse(newIncome.idPatient));
+        // var hasActive = _priorityQueueService.HasActiveIncome(Guid.Parse(newIncome.idPatient));
+        var hasActive = await _incomeRepository.HasActiveIncomeByPatient(newIncome.idPatient);
+        Console.WriteLine(hasActive);
         if (hasActive) throw new BusinessConflicException("El paciente ya tiene un ingreso activo.");
 
         var argentinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Argentina/Buenos_Aires");
@@ -53,7 +54,6 @@ public class IncomesService : IIncomesService
             Patient = patientFound,
             Nurse = (Nurse)nurseFound
         };
-
         await _incomeRepository.AddIncome(income);
         _priorityQueueService.Enqueue(income);
         return MapToDto(income);
@@ -72,8 +72,14 @@ public class IncomesService : IIncomesService
     }
     public async Task<List<IncomeDto.Response>?> GetAll()
     {
+        var incomesEarring = _priorityQueueService.GetAll() ?? new List<Income>();
         var incomes = await _incomeRepository.GetAll();
         if (incomes == null || incomes.Count == 0) return new List<IncomeDto.Response>();
+        var allIncomes = incomesEarring
+        .Concat(incomes)
+        .GroupBy(i => i.Id)
+        .Select(g => g.First())
+        .ToList();
         return incomes.Select(MapToDto).ToList();
     }
     private IncomeDto.Response MapToDto(Income income)
@@ -94,7 +100,6 @@ public class IncomesService : IIncomesService
                 income.Patient?.Affiliate?.AffiliateNumber
             )
         );
-
         var levelId = (int)income.EmergencyLevel + 1;
         var levelLabel = income.EmergencyLevel switch
         {

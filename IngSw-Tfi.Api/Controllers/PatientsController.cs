@@ -1,5 +1,6 @@
 ﻿using IngSw_Tfi.Application.DTOs;
 using IngSw_Tfi.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IngSw_Tfi.Api.Controllers;
@@ -13,6 +14,7 @@ private readonly IPatientsService _patientsService;
     {
         _patientsService = patientsService;
     }
+    [Authorize(Policy = "All")]
     [HttpGet("getByCuil/{cuilPatient}")]
     public async Task<IActionResult> GetByCuil(string cuilPatient)
     {
@@ -24,6 +26,7 @@ private readonly IPatientsService _patientsService;
             patientsFound
         });
     }
+    [Authorize(Policy = "All")]
     [HttpGet("getAll")]
     public async Task<IActionResult> GetAll()
     {
@@ -35,6 +38,7 @@ private readonly IPatientsService _patientsService;
             patientsList
         });
     }
+    [Authorize(Policy = "All")]
     [HttpPost]
     public async Task<IActionResult> AddPatient([FromBody] PatientDto.Request patientDto)
     {
@@ -47,8 +51,7 @@ private readonly IPatientsService _patientsService;
             newPatient
         });
     }
-    // Nuevo endpoint: GET /api/patients
-    // Soporta filtrado opcional por DNI mediante query parameter ?dni=12345678
+    [Authorize(Policy = "All")]
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? dni = null)
     {
@@ -65,12 +68,12 @@ private readonly IPatientsService _patientsService;
         return Ok(patientsList);
     }
 
-    // Nuevo endpoint: GET /api/patients/{id}
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
-    {
-        var patient = await _patientsService.GetById(id);
-        if (patient == null) return NotFound();
-        return Ok(patient);
-    }
+    //// Nuevo endpoint: GET /api/patients/{id}
+    //[HttpGet("{id}")]
+    //public async Task<IActionResult> GetById(int id)
+    //{
+    //    var patient = await _patientsService.GetById(id);
+    //    if (patient == null) return NotFound();
+    //    return Ok(patient);
+    //}
 }

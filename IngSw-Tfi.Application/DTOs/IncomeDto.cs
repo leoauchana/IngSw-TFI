@@ -16,14 +16,14 @@ public class IncomeDto
         string idNurse
     );
     public record RequestT(
-        string report,
         EmergencyLevel emergencyLevel,
-        float temperature,
         float frecuencyCardiac,
+        float frecuencyDiastolic,
         float frecuencyRespiratory,
         float frecuencySystolic,
-        float frecuencyDiastolic,
-        string idPatient
+        string idPatient,
+        string report,
+        float temperature
     );
     // Response contiene el DTO anidado de paciente y datos de la admisión
     public record Response(

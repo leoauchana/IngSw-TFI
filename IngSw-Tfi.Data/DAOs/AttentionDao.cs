@@ -59,4 +59,40 @@ public class AttentionDao : DaoBase
 
         return await ExecuteReader(query);
     }
+    public async Task<Dictionary<string, object>?> GetById(string idAttention)
+    {
+        var query = """
+                    SELECT 
+                        c.id_consultation,
+                        c.report AS consultation_report,
+
+                        a.*, 
+                        a.report AS admission_report,
+
+                        d.id_doctor as doctor_id,
+                        d.first_name as doctor_name,
+                        d.last_name as doctor_lastname,
+                        d.dni as doctor_licence_number,
+
+                        n.id_nurse as nurse_id, 
+                        n.first_name as nurse_name, 
+                        n.last_name as nurse_lastname, 
+                        n.dni as nurse_dni,
+
+                        p.*
+                    FROM consultation c
+                    LEFT JOIN admission a 
+                        ON c.admission_id_admission = a.id_admission
+                    LEFT JOIN nurse n
+                        ON a.nurse_id_nurse = n.id_nurse
+                    LEFT JOIN doctor d 
+                        ON c.doctor_id_doctor = d.id_doctor
+                    LEFT JOIN patient p
+                        ON a.patient_id_patient = p.id_patient
+                    WHERE c.id_consultation = @IdAttention;
+                    """;
+        var param = new MySqlParameter("@IdAttention", idAttention);
+        var income = await ExecuteReader(query, param);
+        return income?.FirstOrDefault();
+    }
 }

@@ -1,7 +1,6 @@
 ﻿using IngSw_Tfi.Data.DAOs;
 using IngSw_Tfi.Domain.Entities;
 using IngSw_Tfi.Domain.Repository;
-using IngSw_Tfi.Domain.ValueObjects;
 
 namespace IngSw_Tfi.Data.Repositories;
 
@@ -68,9 +67,9 @@ public class EmployeeRepository : IEmployeeRepository
         {
             targetId = idObj?.ToString();
         }
-        if (targetId != null && Guid.TryParse(targetId, out var guid))
+        if (targetId != null)
         {
-            user.Id = guid;
+            user.Id = Guid.Parse(targetId);
         }
 
         user.Email = Convert.ToString(record.GetValueOrDefault("email"));

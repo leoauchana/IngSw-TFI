@@ -1,11 +1,13 @@
 
-using System.Text;
 using IngSw_Tfi.Api.Middlewares;
 using IngSw_Tfi.Application;
 using IngSw_Tfi.Data;
 using IngSw_Tfi.Transversal;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace IngSw_Tfi.Api
 {
@@ -15,7 +17,13 @@ namespace IngSw_Tfi.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers(options =>
+            {
+                var policy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+                options.Filters.Add(new AuthorizeFilter(policy));
+            });
             
             builder.Services.Configure<RouteOptions>(options =>
             {

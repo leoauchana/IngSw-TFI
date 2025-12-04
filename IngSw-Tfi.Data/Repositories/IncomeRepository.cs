@@ -16,7 +16,6 @@ public class IncomeRepository : IIncomeRepository
     }
     public async Task AddIncome(Income newIncome) => await _incomeDao.AddIncome(newIncome);
     public async Task<Income?> GetById(string idIncome)
-
     {
         var incomeData = await _incomeDao.GetById(idIncome);
         if (incomeData == null) return null;
@@ -36,14 +35,11 @@ public class IncomeRepository : IIncomeRepository
     {
         var incomesData = await _incomeDao.GetAll();
         if (incomesData == null) return null;
-        var listIncomes = incomesData!.Select(i => MapEntity(i)).ToList();
-        return listIncomes
-                    .Where(i => i.IncomeStatus == IncomeStatus.EARRING)
-                    .ToList();
+        var incomesList = incomesData!.Select(i => MapEntity(i)).ToList();
+        return incomesList.Where(i => i.IncomeStatus != IncomeStatus.EARRING).ToList();
     }
     private Income MapEntity(Dictionary<string, object> value)
     {
-        // Extraer y validar CUIL antes de crear el ValueObject
         string? cuilValue = null;
         if (value.ContainsKey("patient_cuil"))
         {
@@ -73,30 +69,25 @@ public class IncomeRepository : IIncomeRepository
             }
         };
 
-        // Mapear ID de la admisión
         Guid incomeId = Guid.Empty;
         if (value.ContainsKey("id_admission") && Guid.TryParse(value["id_admission"]?.ToString(), out var iid))
             incomeId = iid;
 
-        // Mapear Status (0-based en enum IncomeStatus)
         IncomeStatus? status = null;
         if (value.ContainsKey("status") && int.TryParse(value["status"]?.ToString(), out var statusInt))
             status = (IncomeStatus)statusInt;
 
-        // Mapear Level (en DB es 1-5, en enum EmergencyLevel es 0-4)
         EmergencyLevel? emergencyLevel = null;
         if (value.ContainsKey("level") && int.TryParse(value["level"]?.ToString(), out var levelInt))
         {
-            // Convert from 1-based (DB) to 0-based (enum)
-            emergencyLevel = (EmergencyLevel)(levelInt - 1);
+            emergencyLevel = (EmergencyLevel)(levelInt);
         }
 
-        // Mapear fecha
         DateTime? incomeDate = null;
         if (value.ContainsKey("start_date") && DateTime.TryParse(value["start_date"]?.ToString(), out var dt))
             incomeDate = dt;
 
-        // Mapear enfermera
+
         Nurse? nurse = null;
         if (value.ContainsKey("nurse_id") && value["nurse_id"] != null && value["nurse_id"] != DBNull.Value)
         {
@@ -147,5 +138,11 @@ public class IncomeRepository : IIncomeRepository
         }
         income.BloodPressure = bloodPressure;
         return income;
+    }
+    public async Task<bool> HasActiveIncomeByPatient(string idPatient)
+    {
+        var incomeData = await _incomeDao.VerifyIncome(idPatient);
+        if (incomeData == null) return false;
+        return true;
     }
 }

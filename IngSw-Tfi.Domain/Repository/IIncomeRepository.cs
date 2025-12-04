@@ -10,4 +10,5 @@ public interface IIncomeRepository
     Task UpdateStatus(Guid id, IncomeStatus status);
     Task AddIncome(Income newIncome);
     Task<Income?> GetById(string idIncome);
+    Task<bool> HasActiveIncomeByPatient(string idPatient);
 }

@@ -21,6 +21,14 @@ public class AttentionRepository : IAttentionRepository
         if (attentionsRegistered == null) return new List<Attention>();
         return attentionsRegistered.Select(a => MapEntity(a)).ToList();
     }
+
+    public async Task<Attention> GetById(string idAttention)
+    {
+        var attentionData = await _attentionDao.GetById(idAttention);
+        if (attentionData == null) return null;
+        return MapEntity(attentionData);
+    }
+
     private Attention MapEntity(Dictionary<string, object> value)
     {
         string? cuilValue = null;

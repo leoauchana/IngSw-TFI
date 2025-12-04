@@ -23,6 +23,7 @@ public class AttentionService : IAttentionService
     }
     public async Task<AttentionDto.Response?> AddAttention(string idDoctor, AttentionDto.Request newAttention)
     {
+        Console.WriteLine($"Iniciando proceso de agregar atención...{idDoctor}");
         var doctorFound = await _employeeRepository.GetById(idDoctor);
         if (doctorFound == null) throw new EntityNotFoundException("No se encontró al doctor autenticado.");
         var incomeFound = await _incomeRepository.GetById(newAttention.idIncome);
@@ -164,5 +165,12 @@ public class AttentionService : IAttentionService
             income.Description,
             nurseDto
         );
+    }
+
+    public async Task<AttentionDto.Response?> GetById(string idAttention)
+    {
+        var attention = await _attentionRepository.GetById(idAttention);
+        if (attention == null) return null;
+        return MapToDto(attention);
     }
 }

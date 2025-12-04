@@ -6,4 +6,5 @@ public interface IAttentionRepository
 {
     Task AddAttention(Attention newAttention);
     Task<List<Attention>?> GetAll();
+    Task<Attention> GetById(string idAttention);
 }

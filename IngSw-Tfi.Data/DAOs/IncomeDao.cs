@@ -67,7 +67,7 @@ public class IncomeDao : DaoBase
         cmd.Parameters.AddWithValue("@IncomeStatus", newIncome.IncomeStatus);
         cmd.Parameters.AddWithValue("@EmergencyLevel", newIncome.EmergencyLevel);
         cmd.Parameters.AddWithValue("@StartDate", newIncome.IncomeDate);
-        cmd.Parameters.AddWithValue("@EndDate", newIncome.IncomeDate);
+        cmd.Parameters.AddWithValue("@EndDate", DBNull.Value);
         cmd.Parameters.AddWithValue("@Temperature", newIncome.Temperature);
         cmd.Parameters.AddWithValue("@HeartRate", newIncome.FrequencyCardiac!.Value);
         cmd.Parameters.AddWithValue("@RespiratoryRate", newIncome.FrequencyRespiratory!.Value);
@@ -86,5 +86,21 @@ public class IncomeDao : DaoBase
             new MySqlParameter("@Id", idAdmission)
         };
         await ExecuteNonQuery(sql, parameters);
+    }
+    public async Task<Dictionary<string, object>?> VerifyIncome(string idPatient)
+    {
+        var query = """
+            SELECT a.*, p.*, h.*, 
+                   n.id_nurse as nurse_id, n.first_name as nurse_name, n.last_name as nurse_lastname, n.dni as nurse_dni
+            FROM admission a
+            LEFT JOIN patient p ON a.patient_id_patient = p.id_patient
+            LEFT JOIN health_insurance h ON p.health_insurance_id = h.id_health_insurance
+            LEFT JOIN nurse n ON a.nurse_id_nurse = n.id_nurse
+            WHERE a.patient_id_patient = @IdPatient
+            LIMIT 1;
+            """;
+        var param = new MySqlParameter("@IdPatient", idPatient);
+        var income = await ExecuteReader(query, param);
+        return income?.FirstOrDefault();
     }
 }
