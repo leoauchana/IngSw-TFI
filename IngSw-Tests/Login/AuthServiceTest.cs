@@ -1,12 +1,15 @@
-﻿using IngSw_Application.DTOs;
-using IngSw_Application.Exceptions;
-using IngSw_Application.Interfaces;
-using IngSw_Application.Services;
-using IngSw_Domain.Entities;
-using IngSw_Domain.Interfaces;
-using IngSw_Domain.ValueObjects;
+﻿using IngSw_Tfi.Application.DTOs;
+using IngSw_Tfi.Domain.Exception;
+using IngSw_Tfi.Domain.Interfaces;
+using IngSw_Tfi.Application.Services;
+using IngSw_Tfi.Domain.Entities;
+using IngSw_Tfi.Application.Interfaces;
+using IngSw_Tfi.Domain.ValueObjects;
+using IngSw_Tfi.Domain.Repository;
 using NSubstitute;
 using Xunit;
+using Microsoft.Extensions.Configuration;
+using IngSw_Tfi.Application.Exceptions;
 
 namespace IngSw_Tests.Login;
 
@@ -14,17 +17,30 @@ public class AuthServiceTest
 {
 	private readonly IEmployeeRepository _employeeRepository;
 	private readonly AuthService _authService;
-	public AuthServiceTest(/*IConfiguration configuration*/)
+	public AuthServiceTest()
 	{
 		_employeeRepository = Substitute.For<IEmployeeRepository>();
-		_authService = new AuthService(_employeeRepository/*, configuration*/);
+
+        var settings = new Dictionary<string, string?>
+        {
+            { "Jwt:Key", "A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6" },
+            { "Jwt:Issuer", "TestIssuer" },
+            { "Jwt:Audience", "TestAudience" },
+            { "Jwt:ExpiresMinutes", "60" }
+        };
+
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(settings!)
+            .Build();
+
+        _authService = new AuthService(_employeeRepository, configuration);
 	}
     [Fact]
     public async Task Login_WhenYouEnterTheCorrectEmailAndPassword_ThenYouLogIn_ShouldGetTheEmployee()
 	{
 		// Arrange
 
-		var userDto = new UserDto.Request("ramirobrito@gmail.com", "bocateamo");
+		var userDto = new UserDto.RequestUser("ramirobrito@gmail.com", "bocateamo");
         var employeeFound = new Employee
         {
             Name = "Ramiro",
@@ -59,7 +75,7 @@ public class AuthServiceTest
     {
         // Arrange
 
-        var userDto = new UserDto.Request("matiasbrito@gmail.com", "bocateamo");
+        var userDto = new UserDto.RequestUser("matiasbrito@gmail.com", "bocateamo");
         var employeeFound = new Employee
         {
             Name = "Ramiro",
@@ -91,7 +107,7 @@ public class AuthServiceTest
     {
 		// Arrange
 
-		var userDto = new UserDto.Request("ramirobrito@gmail.com", "riverteamo");
+		var userDto = new UserDto.RequestUser("ramirobrito@gmail.com", "riverteamo");
         var employeeFound = new Employee
         {
             Name = "Ramiro",
@@ -121,7 +137,7 @@ public class AuthServiceTest
     {
 		// Arrange
 
-		var userDto = new UserDto.Request("", "riverteamo");
+		var userDto = new UserDto.RequestUser("", "riverteamo");
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ArgumentException>(
@@ -135,7 +151,7 @@ public class AuthServiceTest
 	{
 		// Arrange
 
-		var userDto = new UserDto.Request("ramirobrito@gmail.com", "");
+		var userDto = new UserDto.RequestUser("ramirobrito@gmail.com", "");
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ArgumentException>(
@@ -161,8 +177,25 @@ public class AuthServiceTest
             typeEmployee: "Nurse"
             );
 
-        _employeeRepository.Register(Arg.Any<Employee>())
-            .Returns(callInfo => callInfo.Arg<Employee>());
+        Employee? employeeCaptured = null;
+
+        _employeeRepository
+            .Register(Arg.Do<Employee>(x => employeeCaptured = x))!
+            .Returns(Task.FromResult<Employee>(new Nurse
+            {
+                Id = Guid.NewGuid(),
+                Name = "Ramiro",
+                LastName = "Brito",
+                Email = "ramirobrito@gmail.com",
+                PhoneNumber = "381754963",
+                Cuil = Cuil.Create("20-45750673-8"),
+                Registration = "LO78Q",
+                User = new User
+                {
+                    Email = "ramirobrito@gmail.com",
+                    Password = "HASHED-PASS"
+                }
+            }));
 
         //Act
         var result = await _authService.Register(userDto);

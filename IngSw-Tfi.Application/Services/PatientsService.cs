@@ -19,7 +19,7 @@ public class PatientsService : IPatientsService
         _patientRepository = patientRepository;
         _socialWorkServiceApi = socialWorkServiceApi;
     }
-    public async Task<PatientDto.Response?> AddPatient(PatientDto.Request patientData)
+    public async Task<PatientDto.Response?> AddPatient(PatientDto.RequestPatient patientData)
     {
         var patientFound = await _patientRepository.GetByCuil(patientData.cuilPatient);
         if (patientFound != null)
@@ -29,6 +29,7 @@ public class PatientsService : IPatientsService
         {
             { "Apellido", patientData.lastNamePatient },
             { "Nombre", patientData.namePatient },
+            { "Telefono", patientData.phone },
             { "Calle", patientData.streetDomicilie },
             { "Localidad", patientData.localityDomicilie }
         };
@@ -37,8 +38,10 @@ public class PatientsService : IPatientsService
             if (string.IsNullOrWhiteSpace(Convert.ToString(campo.Value)))
                 throw new ArgumentException($"El campo '{campo.Key}' no puede ser omitido.");
         }
-        if (patientData.numberDomicilie <= 0 || patientData.numberDomicilie > 999999)
+        if (patientData.numberDomicilie <= 0 || patientData.numberDomicilie > 99999)
             throw new ArgumentException("El campo 'Número' no puede ser omitido o exceder el límite permitido.");
+        if (patientData.birthDate < new DateTime(1900, 1, 1) || patientData.birthDate > DateTime.Today)
+            throw new ArgumentException("El campo 'Fecha de nacimiento' es inválido o está fuera del rango permitido.");
 
         Affiliate? affiliation = null;
         //bool oneCompleted = string.IsNullOrEmpty(patientData.idSocialWork) != string.IsNullOrEmpty(patientData.affiliateNumber);
@@ -54,8 +57,8 @@ public class PatientsService : IPatientsService
             var socialWorkFound = await _socialWorkServiceApi.ExistingSocialWork(patientData.idSocialWork);
             if (socialWorkFound == null)
                 throw new BusinessConflicException("La obra social no existe, por lo tanto no se puede registrar al paciente.");
-            //if (!await _socialWorkServiceApi.IsAffiliated(patientData.affiliateNumber))
-            //    throw new BusinessConflicException("El paciente no es afiliado de la obra social, por lo tanto no se puede registrar al paciente.");
+            if (!await _socialWorkServiceApi.IsAffiliated(patientData.affiliateNumber))
+                throw new BusinessConflicException("El paciente no es afiliado de la obra social, por lo tanto no se puede registrar al paciente.");
             affiliation = new Affiliate {SocialWork = socialWorkFound, AffiliateNumber = patientData.affiliateNumber };
         }
         var newPatient = new Patient

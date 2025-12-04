@@ -40,7 +40,7 @@ private readonly IPatientsService _patientsService;
     }
     [Authorize(Policy = "All")]
     [HttpPost]
-    public async Task<IActionResult> AddPatient([FromBody] PatientDto.Request patientDto)
+    public async Task<IActionResult> AddPatient([FromBody] PatientDto.RequestPatient patientDto)
     {
         var newPatient = await _patientsService.AddPatient(patientDto);
         if (newPatient == null)

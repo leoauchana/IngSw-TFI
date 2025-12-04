@@ -22,7 +22,7 @@ private readonly IEmployeeRepository _employeeRepository;
         _employeeRepository = employeeRepository;
         _configuration = configuration;
     }
-    public async Task<UserDto.Response?> Login(UserDto.Request? userData)
+    public async Task<UserDto.Response?> Login(UserDto.RequestUser? userData)
     {
         if (string.IsNullOrWhiteSpace(userData!.email) || string.IsNullOrWhiteSpace(userData!.password)) throw new ArgumentException("Debe ingresar correctamente los datos");
         var employeeFound = await _employeeRepository.GetByEmail(userData.email);
@@ -43,67 +43,16 @@ private readonly IEmployeeRepository _employeeRepository;
     }
     public async Task<UserDto.Response?> Register(UserDto.RequestRegister? userData)
     {
-        var campos = new Dictionary<string, object?>
-        {
-            { "Email",              userData?.email },
-            { "Contraseña",         userData?.password },
-            { "Confirmacion",       userData?.confirmPassword },
-            { "Nombre",             userData?.name },
-            { "Apellido",           userData?.lastName },
-            { "Cuil",               userData?.cuil },
-            { "Licencia",           userData?.licence },
-            { "Numero de Telefono", userData?.phoneNumber },
-            { "Tipo de Empleado",   userData?.typeEmployee }
-        };
-        foreach (var campo in campos)
-        {
-            if (string.IsNullOrWhiteSpace(Convert.ToString(campo.Value)))
-                throw new ArgumentException($"El campo '{campo.Key}' no puede ser omitido.");
-        }
-        if (userData!.password != userData.confirmPassword)
-            throw new ArgumentException("Las contraseñas no coinciden.");
+        ValidateRegisterData(userData!);
 
-        Employee newEmployee = userData.typeEmployee.ToLower().Equals("doctor") ? new Doctor()
-        {
-            Name = userData.name,
-            LastName = userData.lastName,
-            Cuil = Cuil.Create(userData.cuil),
-            Email = userData.email,
-            PhoneNumber = userData.phoneNumber,
-            Registration = userData.licence,
-            User = new User
-            {
-                Email = userData.email,
-                Password = BCrypt.Net.BCrypt.HashPassword(userData!.password)
-            }
-        } : new Nurse()
-        {
-            Name = userData.name,
-            LastName = userData.lastName,
-            Cuil = Cuil.Create(userData.cuil),
-            Email = userData.email,
-            PhoneNumber = userData.phoneNumber,
-            User = new User
-            {
-                Email = userData.email,
-                Password = BCrypt.Net.BCrypt.HashPassword(userData!.password)
-            }
-        };
+        Employee newEmployee = CreateEmployee(userData!);
 
         var employeeRegistered = await _employeeRepository.Register(newEmployee);
 
-        return employeeRegistered != null ? new UserDto.Response
-        (
-            employeeRegistered.Id.ToString() ?? string.Empty,
-            employeeRegistered.Email!,
-            employeeRegistered.Name!,
-            employeeRegistered.LastName!,
-            employeeRegistered.Cuil!.Value!,
-            employeeRegistered.Registration!,
-            employeeRegistered.PhoneNumber!,
-            GetRoleName(employeeRegistered),
-            string.Empty
-        ) : null;
+        if (employeeRegistered == null)
+            return null;
+
+        return MapToResponse(employeeRegistered);
     }
     private string TokenGenerator(Employee user)
     {
@@ -143,5 +92,87 @@ private readonly IEmployeeRepository _employeeRepository;
             Nurse => "Enfermera",
             _ => employee.GetType().Name
         };
+    }
+    private void ValidateRegisterData(UserDto.RequestRegister userData)
+    {
+        var campos = new Dictionary<string, object?>
+    {
+        { "Email",              userData.email },
+        { "Contraseña",         userData.password },
+        { "Confirmacion",       userData.confirmPassword },
+        { "Nombre",             userData.name },
+        { "Apellido",           userData.lastName },
+        { "Cuil",               userData.cuil },
+        { "Licencia",           userData.licence },
+        { "Numero de Telefono", userData.phoneNumber },
+        { "Tipo de Empleado",   userData.typeEmployee }
+    };
+
+        foreach (var campo in campos)
+        {
+            if (string.IsNullOrWhiteSpace(Convert.ToString(campo.Value)))
+                throw new ArgumentException($"El campo '{campo.Key}' no puede ser omitido.");
+        }
+
+        if (userData.password != userData.confirmPassword)
+            throw new ArgumentException("Las contraseñas no coinciden.");
+    }
+    private Employee CreateEmployee(UserDto.RequestRegister userData)
+    {
+        var passwordHashed = BCrypt.Net.BCrypt.HashPassword(userData.password);
+
+        var baseEmployee = new
+        {
+            userData.name,
+            userData.lastName,
+            userData.email,
+            cuil = Cuil.Create(userData.cuil),
+            userData.phoneNumber,
+            userData.licence
+        };
+
+        return userData.typeEmployee.Equals("doctor", StringComparison.OrdinalIgnoreCase)
+            ? new Doctor
+            {
+                Name = baseEmployee.name,
+                LastName = baseEmployee.lastName,
+                Cuil = baseEmployee.cuil,
+                Email = baseEmployee.email,
+                PhoneNumber = baseEmployee.phoneNumber,
+                Registration = baseEmployee.licence,
+                User = new User
+                {
+                    Email = userData.email,
+                    Password = passwordHashed
+                }
+            }
+            : new Nurse
+            {
+                Name = baseEmployee.name,
+                LastName = baseEmployee.lastName,
+                Cuil = baseEmployee.cuil,
+                Email = baseEmployee.email,
+                PhoneNumber = baseEmployee.phoneNumber,
+                Registration = baseEmployee.licence,
+                User = new User
+                {
+                    Email = userData.email,
+                    Password = passwordHashed
+                }
+            };
+    }
+    private UserDto.Response MapToResponse(Employee employee)
+    {
+        return new UserDto.Response(
+            employee.Id.ToString(),
+            employee.Email!,
+            employee.Name!,
+            employee.LastName!,
+            employee.Cuil!.Value!,
+            employee.Registration!,
+            employee.PhoneNumber!,
+            employee.GetType().Name,//GetRoleName(employee),
+            string.Empty
+        );
     }
 }
