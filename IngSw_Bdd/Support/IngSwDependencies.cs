@@ -30,6 +30,7 @@ public class IngSwDependencies
         _container.RegisterTypeAs<PatientsService, IPatientsService>();
         _container.RegisterTypeAs<IncomesService, IIncomesService>();
         _container.RegisterTypeAs<SocialWorkServiceApi, ISocialWorkServiceApi>();
+        _container.RegisterTypeAs<SocialWorkService, ISocialWorkService>();
 
         _container.RegisterTypeAs<PriorityQueueService, IPriorityQueueService>();
     }

@@ -25,8 +25,8 @@ public class SocialWorkRepositoryInMemory : ISocialWorkRepository
         return Task.FromResult(socialWork);
     }
 
-    public Task<bool> ValidateInsuranceAndMember(string nameSocial, int memerNumber)
+    public bool ValidateInsuranceAndMember(string nameSocial, int memerNumber)
     {
-        throw new NotImplementedException();
+        return true;
     }
 }

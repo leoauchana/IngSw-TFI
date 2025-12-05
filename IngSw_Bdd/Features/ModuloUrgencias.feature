@@ -27,7 +27,7 @@ Scenario: Ingreso de un paciente sin registro previo a la lista de espera de urg
 		| abd31a2d-50d9-4b80-87ee-3dfeeae123ba | Galeno        |
 	When registro al paciente a urgencias con los siguientes datos:
 		| Id                                   | Cuil          | LastName | Name   | Email                   | Phone      | BirthDate  | Street     | Number | Locality   | AffiliateNumber | IdSocialWork                         |
-		| 146d0ee4-20f2-451f-b46e-09ef98568bab | 20-45625563-4 | Auchana  | Leonel | leonel.auchana@mail.com | 3814552211 | 1995-04-12 | San Martín |    452 | San Miguel | AF-2025-8891    | b4496ccd-1661-48ff-90e9-1432055e0226 |
+		| 146d0ee4-20f2-451f-b46e-09ef98568bab | 20-45625563-4 | Auchana  | Leonel | leonel.auchana@mail.com | 3814552211 | 1995-04-12 | San Martín |    452 | San Miguel |         4854166 | b4496ccd-1661-48ff-90e9-1432055e0226 |
 	And ingreso a urgencias el nuevo paciente registrado:
 		| Cuil          | Informe      | Nivel de Emergencia | Temperatura | Frecuencia Cardiaca | Frecuencia Respiratoria | Tension Arterial |
 		| 20-45625563-4 | Tiene fiebre | EMERGENCY           |          39 |                  70 |                      15 | 120/80           |
