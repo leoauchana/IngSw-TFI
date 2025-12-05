@@ -7,28 +7,22 @@ using IngSw_Tfi.Domain.Repository;
 
 namespace IngSw_Tfi.Application.Services;
 
-public class AttentionService : IAttentionService
+public class AttentionService(IIncomeRepository incomeRepository, IPriorityQueueService priorityQueueService,
+    IEmployeeRepository employeeRepository, IAttentionRepository attentionRepository) : IAttentionService
 {
-    private readonly IIncomeRepository _incomeRepository;
-    private readonly IPriorityQueueService _priorityQueueService;
-    private readonly IEmployeeRepository _employeeRepository;
-    private readonly IAttentionRepository _attentionRepository;
-    public AttentionService(IIncomeRepository incomeRepository, IPriorityQueueService priorityQueueService,
-        IEmployeeRepository employeeRepository, IAttentionRepository attentionRepository)
-    {
-        _incomeRepository = incomeRepository;
-        _priorityQueueService = priorityQueueService;
-        _employeeRepository = employeeRepository;
-        _attentionRepository = attentionRepository;
-    }
+    private readonly IIncomeRepository _incomeRepository = incomeRepository;
+    private readonly IPriorityQueueService _priorityQueueService = priorityQueueService;
+    private readonly IEmployeeRepository _employeeRepository = employeeRepository;
+    private readonly IAttentionRepository _attentionRepository = attentionRepository;
+
     public async Task<AttentionDto.Response?> AddAttention(string idDoctor, AttentionDto.Request newAttention)
     {
         Console.WriteLine($"Iniciando proceso de agregar atención...{idDoctor}");
         var doctorFound = await _employeeRepository.GetById(idDoctor);
         if (doctorFound == null) throw new EntityNotFoundException("No se encontró al doctor autenticado.");
         var incomeFound = await _incomeRepository.GetById(newAttention.idIncome);
+        if (incomeFound == null) throw new EntityNotFoundException("No se encontró al ingreso seleccionado para la atencion.");
         if (incomeFound.IncomeStatus != IncomeStatus.IN_PROCESS) throw new BusinessConflicException("El ingreso no estaba siendo atendido.");
-        if (incomeFound == null) throw new EntityNotFoundException("No se encontró el ingreso asociado a la atención.");
         var attention = new Attention
         {
             Report = newAttention.report,
@@ -96,7 +90,7 @@ public class AttentionService : IAttentionService
             attention.Id.ToString(),
             incomeDto,
             doctorDto,
-            attention.Report
+            attention.Report ?? string.Empty
         );
     }
     private IncomeDto.Response MapIncomeToDto(Income income)
@@ -117,8 +111,6 @@ public class AttentionService : IAttentionService
                 income.Patient?.Affiliate?.AffiliateNumber
             )
         );
-
-        var levelId = (int)income.EmergencyLevel + 1;
         var levelLabel = income.EmergencyLevel switch
         {
             EmergencyLevel.CRITICAL => "Crítica",
@@ -150,6 +142,8 @@ public class AttentionService : IAttentionService
             );
         }
 
+
+        var levelId = income.EmergencyLevel != null ? (int)income.EmergencyLevel + 1 : 0;
         return new IncomeDto.Response(
             income.Id.ToString(),
             patientDto,

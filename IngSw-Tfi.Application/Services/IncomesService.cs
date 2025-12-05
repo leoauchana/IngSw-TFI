@@ -101,7 +101,7 @@ public class IncomesService : IIncomesService
                 income.Patient?.Affiliate?.AffiliateNumber
             )
         );
-        var levelId = (int)income.EmergencyLevel + 1;
+        var levelId = income.EmergencyLevel != null ? (int)income.EmergencyLevel + 1 : 0;
         var levelLabel = income.EmergencyLevel switch
         {
             EmergencyLevel.CRITICAL => "Crítica",
