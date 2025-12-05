@@ -24,8 +24,8 @@ private readonly IEmployeeRepository _employeeRepository;
     }
     public async Task<UserDto.Response?> Login(UserDto.Request? userData)
     {
-        if (string.IsNullOrWhiteSpace(userData!.email) || string.IsNullOrWhiteSpace(userData!.password)) throw new ArgumentException("Debe ingresar correctamente los datos");
-        var employeeFound = await _employeeRepository.GetByEmail(userData.email);
+        if (string.IsNullOrWhiteSpace(Email.Create(userData!.email!).Value) || string.IsNullOrWhiteSpace(userData!.password)) throw new ArgumentException("Debe ingresar correctamente los datos");
+        var employeeFound = await _employeeRepository.GetByEmail(userData.email!);
         if (employeeFound == null || !VerifyPassword(userData!.password!, employeeFound.User!.Password!)) throw new EntityNotFoundException("Usuario o contraseña incorrecto.");
         var token = TokenGenerator(employeeFound);
         return new UserDto.Response
@@ -60,6 +60,8 @@ private readonly IEmployeeRepository _employeeRepository;
             if (string.IsNullOrWhiteSpace(Convert.ToString(campo.Value)))
                 throw new ArgumentException($"El campo '{campo.Key}' no puede ser omitido.");
         }
+        if (userData!.password.Length < 8)
+            throw new ArgumentException("La contraseña debe poseer un minimo de 8 caracteres de largo.");
         if (userData!.password != userData.confirmPassword)
             throw new ArgumentException("Las contraseñas no coinciden.");
 
@@ -68,7 +70,7 @@ private readonly IEmployeeRepository _employeeRepository;
             Name = userData.name,
             LastName = userData.lastName,
             Cuil = Cuil.Create(userData.cuil),
-            Email = userData.email,
+            Email = Email.Create(userData.email).Value,
             PhoneNumber = userData.phoneNumber,
             Registration = userData.licence,
             User = new User
@@ -81,7 +83,7 @@ private readonly IEmployeeRepository _employeeRepository;
             Name = userData.name,
             LastName = userData.lastName,
             Cuil = Cuil.Create(userData.cuil),
-            Email = userData.email,
+            Email = Email.Create(userData.email).Value,
             PhoneNumber = userData.phoneNumber,
             User = new User
             {

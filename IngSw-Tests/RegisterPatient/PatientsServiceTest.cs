@@ -1,6 +1,8 @@
 ﻿using IngSw_Tfi.Application.DTOs;
 using IngSw_Tfi.Application.Exceptions;
+using IngSw_Tfi.Application.Interfaces;
 using IngSw_Tfi.Application.Services;
+using IngSw_Tfi.Data.DAOs;
 using IngSw_Tfi.Domain.Entities;
 using IngSw_Tfi.Domain.Interfaces;
 using IngSw_Tfi.Domain.Repository;
@@ -14,14 +16,16 @@ public class PatientsServiceTest
     private readonly IPatientRepository _patientsRepository;
     private readonly PatientsService _patientsService;
     private readonly ISocialWorkServiceApi _socialWorkServiceApi;
+    private readonly ISocialWorkService _socialWorkServiceAffiliate;
     public PatientsServiceTest()
     {
         _patientsRepository = Substitute.For<IPatientRepository>();
         _socialWorkServiceApi = Substitute.For<ISocialWorkServiceApi>();
-        _patientsService = new PatientsService(_patientsRepository, _socialWorkServiceApi);
+        _socialWorkServiceAffiliate = Substitute.For<ISocialWorkService>();
+        _patientsService = new PatientsService(_patientsRepository, _socialWorkServiceApi, _socialWorkServiceAffiliate);
     }
     [Fact]
-    public async Task AddPatient_WhenTheHealthcareSystemExistsWithSocialWorkExisting_ShouldCreateThePatient()
+    public async Task AddPatient_WhenTheHealthcareExists_ShouldCreateThePatient()
     {
         // Arrange
         var HealthCare = new SocialWork
@@ -56,7 +60,7 @@ public class PatientsServiceTest
         Assert.Equal(patientDto.lastNamePatient, result.lastNamePatient);
     }
     [Fact]
-    public async Task AddPatient_WhenTheHealthcareSystemExistsWithoutSocialWork_ShouldCreateThePatient()
+    public async Task AddPatient_WhenTheHealthcareIsNull_ShouldCreateThePatient()
     {
         // Arrange
         var patientDto = new PatientDto.Request(
@@ -84,7 +88,7 @@ public class PatientsServiceTest
         Assert.Equal(patientDto.lastNamePatient, result.lastNamePatient);
     }
     [Fact]
-    public async Task AddPatient_WhenTheHealthcareSystemExistsWithSocialWorkInexisting_ShouldNotCreateThePatient()
+    public async Task AddPatient_WhenTheHealthcareDoesNotExist_ShouldNotCreateThePatient()
     {
         // Arrange
         var patientDto = new PatientDto.Request(
@@ -112,12 +116,10 @@ public class PatientsServiceTest
         await _patientsRepository.Received(0).AddPatient(Arg.Any<Patient>());
     }
     [Fact]
-    public async Task AddPatient_WhenSocialWorkOrAffiliateNumberIsMissing_ShouldThrowArgumentException()
+    public async Task AddPatient_WhenPatientIsNotAffiliated_ShouldThrowArgumentException()
     {
         // Arrange
-
-        // Caso 1: Falta el número de afiliado, pero se indica la obra social
-        var patientDtoMissingAffiliate = new PatientDto.Request(
+        var patientDto = new PatientDto.Request(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
@@ -128,37 +130,25 @@ public class PatientsServiceTest
             numberDomicilie: 356,
             localityDomicilie: "CABA",
             idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
-            affiliateNumber: null
+            affiliateNumber: "123456"
         );
-        // Caso 2: Falta la obra social, pero se indica el número de afiliado
-        var patientDtoMissingSocialWork = new PatientDto.Request(
-            cuilPatient: "20-45750673-8",
-            namePatient: "Lautaro",
-            lastNamePatient: "Lopez",
-            email: "lautalopez@gmail.com",
-            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
-            phone: "3814050905",
-            streetDomicilie: "Avenue Nine Of July",
-            numberDomicilie: 356,
-            localityDomicilie: "CABA",
-            idSocialWork: null,
-            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
+        var socialWorkFound = new SocialWork();
+
+        _socialWorkServiceApi.ExistingSocialWork(patientDto.idSocialWork!)!
+            .Returns(Task.FromResult<SocialWork?>(socialWorkFound));
+        _socialWorkServiceAffiliate.ValidateInsuranceAndMember(Arg.Any<SocialWorkDto.Validate>()).
+            Returns(Task.FromResult(false));
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
         );
 
-        // Act & Assert
-
-        var exception1 = await Assert.ThrowsAsync<ArgumentException>(
-            () => _patientsService.AddPatient(patientDtoMissingAffiliate)
-        );
-        Assert.Equal("Si se ingresa la obra social, también debe ingresarse el número de afiliado (y viceversa).", exception1.Message);
-
-        var exception2 = await Assert.ThrowsAsync<ArgumentException>(
-            () => _patientsService.AddPatient(patientDtoMissingSocialWork)
-        );
-        Assert.Equal("Si se ingresa la obra social, también debe ingresarse el número de afiliado (y viceversa).", exception2.Message);
-
-        await _socialWorkServiceApi.Received(0).ExistingSocialWork(Arg.Any<string>());
-        await _patientsRepository.Received(0).AddPatient(Arg.Any<Patient>());
+        //Assert
+        await _socialWorkServiceApi.Received(1).ExistingSocialWork(Arg.Any<string>());
+        await _socialWorkServiceAffiliate.Received(1).ValidateInsuranceAndMember(Arg.Any<SocialWorkDto.Validate>());
+        //await _patientsRepository.Received(1).AddPatient(Arg.Any<Patient>());
+        Assert.Equal("No se pudo registrar el paciente dado que no esta afiliado a la obra social.", exception.Message);
     }
     [Fact]
     public async Task AddPatient_WhenCuilIsNotValid_ThenShouldThrowExceptionAndNotCreateThePatient()

@@ -14,10 +14,12 @@ public class PatientsService : IPatientsService
 {
     private readonly IPatientRepository _patientRepository;
     private readonly ISocialWorkServiceApi _socialWorkServiceApi;
-    public PatientsService(IPatientRepository patientRepository, ISocialWorkServiceApi socialWorkServiceApi)
+    private readonly ISocialWorkService _socialWorkServiceAffiliated;
+    public PatientsService(IPatientRepository patientRepository, ISocialWorkServiceApi socialWorkServiceApi, ISocialWorkService socialWorkServiceAffiliated)
     {
         _patientRepository = patientRepository;
         _socialWorkServiceApi = socialWorkServiceApi;
+        _socialWorkServiceAffiliated = socialWorkServiceAffiliated;
     }
     public async Task<PatientDto.Response?> AddPatient(PatientDto.Request patientData)
     {
@@ -59,6 +61,7 @@ public class PatientsService : IPatientsService
                 throw new BusinessConflicException("La obra social no existe, por lo tanto no se puede registrar al paciente.");
             //if (!await _socialWorkServiceApi.IsAffiliated(patientData.affiliateNumber))
             //    throw new BusinessConflicException("El paciente no es afiliado de la obra social, por lo tanto no se puede registrar al paciente.");
+                            
             affiliation = new Affiliate {SocialWork = socialWorkFound, AffiliateNumber = patientData.affiliateNumber };
         }
         var newPatient = new Patient
@@ -78,6 +81,14 @@ public class PatientsService : IPatientsService
             Affiliate = affiliation
         };
         await _patientRepository.AddPatient(newPatient);
+
+        var socialWorkDto = new SocialWorkDto.Validate(
+                name: affiliation!.SocialWork!.Name!,
+                memberNumber: int.Parse(affiliation!.AffiliateNumber!)
+            );
+        var affiliateValidation = await _socialWorkServiceAffiliated.ValidateInsuranceAndMember(socialWorkDto);
+        if (affiliateValidation == false)
+            throw new ArgumentException("No se pudo registrar el paciente dado que no esta afiliado a la obra social.");
 
         return new PatientDto.Response(newPatient.Id, newPatient.Cuil.Value!, newPatient.Name!, newPatient.LastName!, newPatient.Email!,
                     newPatient.BirthDate, newPatient.Phone, newPatient.Domicilie!.Street!, newPatient.Domicilie.Number, newPatient.Domicilie.Locality!,
