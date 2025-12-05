@@ -25,6 +25,7 @@ public class IncomesService : IIncomesService
     }
     public async Task<IncomeDto.Response?> AddIncome(string idUser, IncomeDto.RequestT newIncome)
     {
+        ValidateIncome(newIncome);
         // Verificar que existe la enfermera registrada
         var nurseFound = await _employeeRepository.GetById(idUser);
         if (nurseFound == null) throw new EntityNotFoundException($"No se encontro el empleado autenticado de id {idUser}");
@@ -32,9 +33,7 @@ public class IncomesService : IIncomesService
         var patientFound = await _patientRepository.GetByGuid(newIncome.idPatient);
         if (patientFound == null) throw new EntityNotFoundException($"No se encontró ningún paciente con cuil {newIncome.idPatient}");
         // Verificar que el paciente no tenga un ingreso activo
-        // var hasActive = _priorityQueueService.HasActiveIncome(Guid.Parse(newIncome.idPatient));
         var hasActive = await _incomeRepository.HasActiveIncomeByPatient(newIncome.idPatient);
-        Console.WriteLine(hasActive);
         if (hasActive) throw new BusinessConflicException("El paciente ya tiene un ingreso activo.");
 
         var argentinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Argentina/Buenos_Aires");
@@ -55,6 +54,8 @@ public class IncomesService : IIncomesService
             Nurse = (Nurse)nurseFound
         };
         await _incomeRepository.AddIncome(income);
+        var i = _incomeRepository.GetAll();
+        Console.WriteLine(i);
         _priorityQueueService.Enqueue(income);
         return MapToDto(income);
     }
@@ -85,7 +86,7 @@ public class IncomesService : IIncomesService
     private IncomeDto.Response MapToDto(Income income)
     {
         var patientDto = new PatientDto.Response(
-            income.Patient?.Id ?? Guid.Empty,
+            income.Patient?.Id.ToString() ?? string.Empty,
             income.Patient?.Cuil?.Value ?? string.Empty,
             income.Patient?.Name ?? string.Empty,
             income.Patient?.LastName ?? string.Empty,
@@ -146,6 +147,31 @@ public class IncomesService : IIncomesService
             income.Description,
             nurseDto
         );
+    }
+    private void ValidateIncome(IncomeDto.RequestT newIncome)
+    {
+        if (newIncome == null)
+            throw new BusinessConflicException("Los datos del ingreso son requeridos.");
+        if (string.IsNullOrWhiteSpace(newIncome.idPatient))
+            throw new BusinessConflicException("El id del paciente es requerido.");
+        if (string.IsNullOrWhiteSpace(newIncome.report))
+            throw new BusinessConflicException("El reporte no puede estar vacío.");
+        if (newIncome.temperature <= 0)
+            throw new BusinessConflicException("La temperatura no puede ser un valor negativo ni igual a cero.");
+        if (newIncome.frecuencyCardiac <= 0)
+            throw new BusinessConflicException("La frecuencia cardíaca no puede ser un valor negativo ni igual a cero.");
+        if (newIncome.frecuencyRespiratory <= 0)
+            throw new BusinessConflicException("La frecuencia respiratoria no puede ser un valor negativo ni igual a cero.");
+        if (newIncome.frecuencySystolic <= 0)
+            throw new BusinessConflicException("La frecuencia sistólica no puede ser un valor negativo ni igual a cero.");
+        if (newIncome.frecuencyDiastolic <= 0)
+            throw new BusinessConflicException("La frecuencia diastólica no puede ser un valor negativo ni igual a cero.");
+        if (newIncome.frecuencySystolic < newIncome.frecuencyDiastolic)
+            throw new BusinessConflicException("La sistólica debe ser mayor o igual que la diastólica.");
+        if (newIncome.emergencyLevel == null)
+            throw new BusinessConflicException("El nivel de emergencia es requerido.");
+        if (!Enum.IsDefined(typeof(EmergencyLevel), newIncome.emergencyLevel.Value))
+            throw new BusinessConflicException("El nivel de emergencia enviado no es válido.");
     }
 }
 

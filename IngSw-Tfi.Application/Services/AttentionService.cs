@@ -103,7 +103,7 @@ public class AttentionService : IAttentionService
     private IncomeDto.Response MapIncomeToDto(Income income)
     {
         var patientDto = new PatientDto.Response(
-            income.Patient?.Id ?? Guid.Empty,
+            income.Patient?.Id.ToString() ?? string.Empty,
             income.Patient?.Cuil?.Value ?? string.Empty,
             income.Patient?.Name ?? string.Empty,
             income.Patient?.LastName ?? string.Empty,

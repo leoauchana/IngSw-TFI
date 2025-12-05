@@ -76,7 +76,7 @@ public class PatientsService : IPatientsService
         };
         await _patientRepository.AddPatient(newPatient);
 
-        return new PatientDto.Response(newPatient.Id, newPatient.Cuil.Value!, newPatient.Name!, newPatient.LastName!, newPatient.Email!,
+        return new PatientDto.Response(newPatient.Id.ToString(), newPatient.Cuil.Value!, newPatient.Name!, newPatient.LastName!, newPatient.Email!,
                     newPatient.BirthDate, newPatient.Phone, newPatient.Domicilie!.Street!, newPatient.Domicilie.Number, newPatient.Domicilie.Locality!,
                     new AffiliateDto.Response(newPatient.Affiliate?.SocialWork?.Name, newPatient.Affiliate?.AffiliateNumber));
     }
@@ -85,7 +85,7 @@ public class PatientsService : IPatientsService
         var patientsFounds = await _patientRepository.GetByCuil(cuilPatient);
         if (patientsFounds == null || !(patientsFounds.Count > 0))
             throw new NullException($"No hay pacientes que coincidan con el cuil {cuilPatient} registrados.");
-        return patientsFounds.Select(pr => new PatientDto.Response(pr.Id, pr.Cuil!.Value!, pr.Name!, pr.LastName!,
+        return patientsFounds.Select(pr => new PatientDto.Response(pr.Id.ToString(), pr.Cuil!.Value!, pr.Name!, pr.LastName!,
                     pr.Email!, pr.BirthDate, pr.Phone, pr.Domicilie!.Street!, pr.Domicilie.Number, pr.Domicilie.Locality!,
                     new AffiliateDto.Response(pr.Affiliate?.SocialWork?.Name, pr.Affiliate?.AffiliateNumber)))
                     .ToList();
@@ -94,7 +94,7 @@ public class PatientsService : IPatientsService
     {
         var patients = await _patientRepository.GetAll();
         if (patients == null || patients.Count == 0) throw new NullException("No hay pacientes registrados.");
-        return patients.Select(p => new PatientDto.Response(p.Id, p.Cuil?.Value ?? string.Empty, p.Name ?? string.Empty, p.LastName ?? string.Empty,
+        return patients.Select(p => new PatientDto.Response(p.Id.ToString(), p.Cuil?.Value ?? string.Empty, p.Name ?? string.Empty, p.LastName ?? string.Empty,
             p.Email ?? string.Empty, p.BirthDate, p.Phone, p.Domicilie?.Street ?? string.Empty, p.Domicilie?.Number ?? 0, p.Domicilie?.Locality ?? string.Empty,
             new AffiliateDto.Response(p.Affiliate?.SocialWork?.Name, p.Affiliate?.AffiliateNumber))).ToList();
     }
@@ -103,7 +103,7 @@ public class PatientsService : IPatientsService
     {
         var patient = await _patientRepository.GetById(id);
         if (patient == null) return null;
-        return new PatientDto.Response(patient.Id, patient.Cuil?.Value ?? string.Empty, patient.Name ?? string.Empty, patient.LastName ?? string.Empty,
+        return new PatientDto.Response(patient.Id.ToString(), patient.Cuil?.Value ?? string.Empty, patient.Name ?? string.Empty, patient.LastName ?? string.Empty,
             patient.Email ?? string.Empty, patient.BirthDate, patient.Phone, patient.Domicilie?.Street ?? string.Empty, patient.Domicilie?.Number ?? 0, patient.Domicilie?.Locality ?? string.Empty,
             new AffiliateDto.Response(patient.Affiliate?.SocialWork?.Name, patient.Affiliate?.AffiliateNumber));
     }
@@ -129,7 +129,7 @@ public class PatientsService : IPatientsService
 
         return listDni
         .Select(p => new PatientDto.Response(
-            p.Id,
+            p.Id.ToString(),
             p.Cuil!.Value!,
             p.Name!,
             p.LastName!,

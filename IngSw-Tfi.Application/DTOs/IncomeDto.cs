@@ -6,7 +6,7 @@ public class IncomeDto
 {
     public record Request(
         string report,
-        EmergencyLevel emergencyLevel,
+        EmergencyLevel? emergencyLevel,
         float temperature,
         float frecuencyCardiac,
         float frecuencyRespiratory,
@@ -16,7 +16,7 @@ public class IncomeDto
         string idNurse
     );
     public record RequestT(
-        EmergencyLevel emergencyLevel,
+        EmergencyLevel? emergencyLevel,
         float frecuencyCardiac,
         float frecuencyDiastolic,
         float frecuencyRespiratory,

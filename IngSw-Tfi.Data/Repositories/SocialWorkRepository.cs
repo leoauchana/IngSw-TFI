@@ -1,7 +1,6 @@
 ﻿using IngSw_Tfi.Data.DAOs;
 using IngSw_Tfi.Domain.Entities;
 using IngSw_Tfi.Domain.Repository;
-using System.Security.Cryptography.X509Certificates;
 
 namespace IngSw_Tfi.Data.Repositories;
 
@@ -13,6 +12,12 @@ public class SocialWorkRepository : ISocialWorkRepository
     {
         _socialWorkDao = socialWorkDao;
     }
+
+    public void AddSocialWork(SocialWork newSocialWork)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<List<SocialWork>?> GetAll()
     {
         var socialList = await _socialWorkDao.GetAll();
