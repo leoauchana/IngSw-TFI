@@ -18,7 +18,7 @@ public class SocialWorkService : ISocialWorkService
         if (list == null || !list.Any()) throw new NullException("No hay obras sociales registradas.");
         return list.Select(h => new SocialWorkDto.Response(h.Id, h.Name!)).ToList();
     }
-    public async Task<bool> ValidateInsuranceAndMember(SocialWorkDto.Validate socialData) => 
-        await _socialWorkRepository.ValidateInsuranceAndMember(socialData.name, socialData.memberNumber);
+    public bool ValidateInsuranceAndMember(SocialWorkDto.Validate socialData) => 
+        _socialWorkRepository.ValidateInsuranceAndMember(socialData.name, socialData.memberNumber);
     
 }

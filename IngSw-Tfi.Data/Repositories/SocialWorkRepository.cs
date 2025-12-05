@@ -27,10 +27,10 @@ public class SocialWorkRepository : ISocialWorkRepository
         return MapEntity(social.First());
     }
 
-    public async Task<bool> ValidateInsuranceAndMember(string name, int memberNumber)
+    public  bool ValidateInsuranceAndMember(string name, int memberNumber)
     {
-        var affiliateFound = await _socialWorkDao.GetByNameAndMemberNumber(name, memberNumber);
-        if (affiliateFound == null) return false;
+        //var affiliateFound = await _socialWorkDao.GetByNameAndMemberNumber(name, memberNumber);
+        //if (affiliateFound == null) return false;
         return true;
     }
 

@@ -24,7 +24,7 @@ private readonly IEmployeeRepository _employeeRepository;
     }
     public async Task<UserDto.Response?> Login(UserDto.Request? userData)
     {
-        if (string.IsNullOrWhiteSpace(Email.Create(userData!.email!).Value) || string.IsNullOrWhiteSpace(userData!.password)) throw new ArgumentException("Debe ingresar correctamente los datos");
+        if (string.IsNullOrWhiteSpace(userData!.email) || string.IsNullOrWhiteSpace(userData!.password)) throw new ArgumentException("Debe ingresar correctamente los datos");
         var employeeFound = await _employeeRepository.GetByEmail(userData.email!);
         if (employeeFound == null || !VerifyPassword(userData!.password!, employeeFound.User!.Password!)) throw new EntityNotFoundException("Usuario o contraseña incorrecto.");
         var token = TokenGenerator(employeeFound);

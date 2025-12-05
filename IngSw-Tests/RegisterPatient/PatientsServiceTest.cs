@@ -43,10 +43,12 @@ public class PatientsServiceTest
             numberDomicilie: 356,
             localityDomicilie: "CABA",
             idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
-            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
+            affiliateNumber: "123456"
         );
         _socialWorkServiceApi.ExistingSocialWork(patientDto.idSocialWork!)!
             .Returns(Task.FromResult(HealthCare));
+        _socialWorkServiceAffiliate.ValidateInsuranceAndMember(Arg.Any<SocialWorkDto.Validate>()).
+            Returns(true);
 
         // Act
         var result = await _patientsService.AddPatient(patientDto);
@@ -54,6 +56,7 @@ public class PatientsServiceTest
         // Assert
         await _patientsRepository.Received(1).AddPatient(Arg.Any<Patient>());
         await _socialWorkServiceApi.Received(1).ExistingSocialWork(Arg.Any<string>());
+        _socialWorkServiceAffiliate.Received(1).ValidateInsuranceAndMember(Arg.Any<SocialWorkDto.Validate>());
         Assert.NotNull(result);
         Assert.Equal(patientDto.cuilPatient, result.cuilPatient);
         Assert.Equal(patientDto.namePatient, result.namePatient);
@@ -137,7 +140,7 @@ public class PatientsServiceTest
         _socialWorkServiceApi.ExistingSocialWork(patientDto.idSocialWork!)!
             .Returns(Task.FromResult<SocialWork?>(socialWorkFound));
         _socialWorkServiceAffiliate.ValidateInsuranceAndMember(Arg.Any<SocialWorkDto.Validate>()).
-            Returns(Task.FromResult(false));
+            Returns(false);
 
         // Act
         var exception = await Assert.ThrowsAsync<ArgumentException>(
@@ -146,7 +149,7 @@ public class PatientsServiceTest
 
         //Assert
         await _socialWorkServiceApi.Received(1).ExistingSocialWork(Arg.Any<string>());
-        await _socialWorkServiceAffiliate.Received(1).ValidateInsuranceAndMember(Arg.Any<SocialWorkDto.Validate>());
+        _socialWorkServiceAffiliate.Received(1).ValidateInsuranceAndMember(Arg.Any<SocialWorkDto.Validate>());
         //await _patientsRepository.Received(1).AddPatient(Arg.Any<Patient>());
         Assert.Equal("No se pudo registrar el paciente dado que no esta afiliado a la obra social.", exception.Message);
     }
@@ -170,10 +173,12 @@ public class PatientsServiceTest
             numberDomicilie: 356,
             localityDomicilie: "CABA",
             idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
-            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
+            affiliateNumber: "1234656"
         );
         _socialWorkServiceApi.ExistingSocialWork(patientDto.idSocialWork!)!
         .Returns(Task.FromResult(HealthCare));
+        _socialWorkServiceAffiliate.ValidateInsuranceAndMember(Arg.Any<SocialWorkDto.Validate>()).
+            Returns(true);
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ArgumentException>(
@@ -181,7 +186,6 @@ public class PatientsServiceTest
         );
 
         Assert.Equal("CUIL con formato inválido.", exception.Message);
-
         await _patientsRepository.DidNotReceive().AddPatient(Arg.Any<Patient>());
     }
     //[Fact]
