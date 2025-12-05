@@ -25,9 +25,9 @@ public class SocialWorkController : ControllerBase
         return Ok(socialsWork);
     }
     [HttpPost("validate")]
-    public async Task<IActionResult> ValidateInsuranceAndMember1([FromBody] SocialWorkDto.Validate socialData)
+    public IActionResult ValidateInsuranceAndMember1([FromBody] SocialWorkDto.Validate socialData)
     {
-        var result = await _socialWorkService.ValidateInsuranceAndMember(socialData);
+        var result = _socialWorkService.ValidateInsuranceAndMember(socialData);
         if (!result)
         {
             return Ok(new
