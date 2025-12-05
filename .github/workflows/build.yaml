@@ -28,4 +28,4 @@ jobs:
       run: dotnet test ./IngSw-Tests --configuration Debug --no-build --verbosity normal
 
     - name: Ejecutar tests BDD
-      run: dotnet test ./IngSw_Bdd --configuration Debug --no-build --verbosity normal
+      run: dotnet test ./IngSw_Bdd/IngSw_Bdd.csproj --configuration Debug --no-build --verbosity normal
