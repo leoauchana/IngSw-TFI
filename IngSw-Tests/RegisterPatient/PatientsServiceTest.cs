@@ -24,28 +24,32 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenTheHealthcareSystemExistsWithSocialWorkExisting_ShouldCreateThePatient()
     {
         // Arrange
+        var HealthCare = new SocialWork
+        {
+            Name = "OSPE",
+        };
         var patientDto = new PatientDto.Request(
             cuilPatient: "20-45750673-8",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
-        _socialWorkServiceApi.ExistingSocialWork("OSPE")
-            .Returns(Task.FromResult(true));
-        _socialWorkServiceApi.IsAffiliated("4798540152")
-        .Returns(Task.FromResult(true));
+        _socialWorkServiceApi.ExistingSocialWork(patientDto.idSocialWork!)!
+            .Returns(Task.FromResult(HealthCare));
+
         // Act
         var result = await _patientsService.AddPatient(patientDto);
 
         // Assert
         await _patientsRepository.Received(1).AddPatient(Arg.Any<Patient>());
         await _socialWorkServiceApi.Received(1).ExistingSocialWork(Arg.Any<string>());
-        await _socialWorkServiceApi.Received(1).IsAffiliated(Arg.Any<string>());
         Assert.NotNull(result);
         Assert.Equal(patientDto.cuilPatient, result.cuilPatient);
         Assert.Equal(patientDto.namePatient, result.namePatient);
@@ -60,6 +64,8 @@ public class PatientsServiceTest
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
@@ -86,14 +92,16 @@ public class PatientsServiceTest
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
-            idSocialWork: "Subsidio",
-            affiliateNumber: "4798540152"
+            idSocialWork: "KO55BD63-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
-        _socialWorkServiceApi.ExistingSocialWork("Subsidio")
-            .Returns(Task.FromResult(false));
+        _socialWorkServiceApi.ExistingSocialWork(patientDto.idSocialWork!)!
+            .Returns(Task.FromResult<SocialWork?>(null));
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<BusinessConflicException>(
@@ -101,36 +109,6 @@ public class PatientsServiceTest
         );
         Assert.Equal("La obra social no existe, por lo tanto no se puede registrar al paciente.", exception.Message);
         await _socialWorkServiceApi.Received(1).ExistingSocialWork(Arg.Any<string>());
-        await _socialWorkServiceApi.Received(0).IsAffiliated(Arg.Any<string>());
-        await _patientsRepository.Received(0).AddPatient(Arg.Any<Patient>());
-    }
-    [Fact]
-    public async Task AddPatient_WhenTheHealthcareSystemExistsWithSocialWorkExistingButWitouthAffiliation_ShouldNotCreateThePatient()
-    {
-        // Arrange
-        var patientDto = new PatientDto.Request(
-            cuilPatient: "20-45750673-8",
-            namePatient: "Lautaro",
-            lastNamePatient: "Lopez",
-            email: "lautalopez@gmail.com",
-            streetDomicilie: "Avenue Nine Of July",
-            numberDomicilie: 356,
-            localityDomicilie: "CABA",
-            idSocialWork: "Subsidio",
-            affiliateNumber: "4798540152"
-        );
-        _socialWorkServiceApi.ExistingSocialWork("Subsidio")
-            .Returns(Task.FromResult(true));
-        _socialWorkServiceApi.IsAffiliated("4798540152")
-            .Returns(Task.FromResult(false));
-
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<BusinessConflicException>(
-            () => _patientsService.AddPatient(patientDto)
-        );
-        Assert.Equal("El paciente no es afiliado de la obra social, por lo tanto no se puede registrar al paciente.", exception.Message);
-        await _socialWorkServiceApi.Received(1).ExistingSocialWork(Arg.Any<string>());
-        await _socialWorkServiceApi.Received(1).IsAffiliated(Arg.Any<string>());
         await _patientsRepository.Received(0).AddPatient(Arg.Any<Patient>());
     }
     [Fact]
@@ -144,10 +122,12 @@ public class PatientsServiceTest
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
-            idSocialWork: "Subsidio",
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
             affiliateNumber: null
         );
         // Caso 2: Falta la obra social, pero se indica el número de afiliado
@@ -156,11 +136,13 @@ public class PatientsServiceTest
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
             idSocialWork: null,
-            affiliateNumber: "4798540152"
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
 
         // Act & Assert
@@ -176,28 +158,32 @@ public class PatientsServiceTest
         Assert.Equal("Si se ingresa la obra social, también debe ingresarse el número de afiliado (y viceversa).", exception2.Message);
 
         await _socialWorkServiceApi.Received(0).ExistingSocialWork(Arg.Any<string>());
-        await _socialWorkServiceApi.Received(0).IsAffiliated(Arg.Any<string>());
         await _patientsRepository.Received(0).AddPatient(Arg.Any<Patient>());
     }
     [Fact]
     public async Task AddPatient_WhenCuilIsNotValid_ThenShouldThrowExceptionAndNotCreateThePatient()
     {
         // Arrange
+        var HealthCare = new SocialWork
+        {
+            Name = "OSPE",
+        };
+
         var patientDto = new PatientDto.Request(
             cuilPatient: "45750673",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
-        _socialWorkServiceApi.ExistingSocialWork("OSPE")
-        .Returns(Task.FromResult(true));
-        _socialWorkServiceApi.IsAffiliated("4798540152")
-        .Returns(Task.FromResult(true));
+        _socialWorkServiceApi.ExistingSocialWork(patientDto.idSocialWork!)!
+        .Returns(Task.FromResult(HealthCare));
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ArgumentException>(
@@ -212,21 +198,27 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenCuilIsNull_ThenShouldThrowExceptionAndNotCreateThePatient()
     {
         // Arrange
+        var HealthCare = new SocialWork
+        {
+            Name = "OSPE",
+        };
+
         var patientDto = new PatientDto.Request(
             cuilPatient: null!,
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
-        _socialWorkServiceApi.ExistingSocialWork("OSPE")
-        .Returns(Task.FromResult(true));
-        _socialWorkServiceApi.IsAffiliated("4798540152")
-        .Returns(Task.FromResult(true));
+        _socialWorkServiceApi.ExistingSocialWork(patientDto.idSocialWork!)!
+        .Returns(Task.FromResult(HealthCare));
+
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ArgumentException>(
             () => _patientsService.AddPatient(patientDto)
@@ -240,21 +232,26 @@ public class PatientsServiceTest
     public async Task AddPatient_WhenCuilIsWhiteSpace_ThenShouldThrowExceptionAndNotCreateThePatient()
     {
         // Arrange
+        var HealthCare = new SocialWork
+        {
+            Name = "OSPE",
+        };
+
         var patientDto = new PatientDto.Request(
             cuilPatient: "   ",
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
-        _socialWorkServiceApi.ExistingSocialWork("OSPE")
-        .Returns(Task.FromResult(true));
-        _socialWorkServiceApi.IsAffiliated("4798540152")
-        .Returns(Task.FromResult(true));
+        _socialWorkServiceApi.ExistingSocialWork(patientDto.idSocialWork!)!
+        .Returns(Task.FromResult(HealthCare));
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ArgumentException>(
@@ -272,11 +269,13 @@ public class PatientsServiceTest
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
 
         var existingPatient = new Patient
@@ -411,11 +410,13 @@ public class PatientsServiceTest
             namePatient: "Lautaro",
             lastNamePatient: "",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
 
         // Act
@@ -436,11 +437,13 @@ public class PatientsServiceTest
             namePatient: "Lautaro",
             lastNamePatient: "  ",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
 
         // Act
@@ -461,11 +464,13 @@ public class PatientsServiceTest
             namePatient: "Lautaro",
             lastNamePatient: null!,
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
 
         // Act
@@ -486,11 +491,13 @@ public class PatientsServiceTest
             namePatient: "",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
 
         // Act
@@ -511,11 +518,13 @@ public class PatientsServiceTest
             namePatient: "   ",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
 
         // Act
@@ -536,11 +545,13 @@ public class PatientsServiceTest
             namePatient: null!,
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
 
         // Act
@@ -561,11 +572,13 @@ public class PatientsServiceTest
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
 
         // Act
@@ -586,11 +599,13 @@ public class PatientsServiceTest
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "   ",
             numberDomicilie: 356,
             localityDomicilie: "CABA",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
 
         // Act
@@ -611,11 +626,13 @@ public class PatientsServiceTest
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: null!,
             numberDomicilie: 356,
             localityDomicilie: "CABA",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
 
         // Act
@@ -637,10 +654,12 @@ public class PatientsServiceTest
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
             streetDomicilie: "Avenue Nine Of July",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             numberDomicilie: 0,
             localityDomicilie: "CABA",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
 
         // Act
@@ -661,11 +680,13 @@ public class PatientsServiceTest
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: -356,
             localityDomicilie: "CABA",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
 
         // Act
@@ -686,12 +707,15 @@ public class PatientsServiceTest
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
-            numberDomicilie: 10000,
+            numberDomicilie: 1000000,
             localityDomicilie: "CABA",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
+
 
         // Act
         var exception = await Assert.ThrowsAsync<ArgumentException>(
@@ -701,6 +725,7 @@ public class PatientsServiceTest
         // Assert
         Assert.NotNull(exception);
         Assert.Equal("El campo 'Número' no puede ser omitido o exceder el límite permitido.", exception.Message);
+        await _patientsRepository.Received(0).AddPatient(Arg.Any<Patient>());
     }
     [Fact]
     public async Task AddPatient_WhenLocalityIsOmitted_ShouldArgumentException()
@@ -711,11 +736,13 @@ public class PatientsServiceTest
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
 
         // Act
@@ -736,11 +763,13 @@ public class PatientsServiceTest
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: "   ",
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
 
         // Act
@@ -761,11 +790,13 @@ public class PatientsServiceTest
             namePatient: "Lautaro",
             lastNamePatient: "Lopez",
             email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "3814050905",
             streetDomicilie: "Avenue Nine Of July",
             numberDomicilie: 356,
             localityDomicilie: null!,
-            idSocialWork: "OSPE",
-            affiliateNumber: "4798540152"
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
 
         // Act
@@ -776,5 +807,59 @@ public class PatientsServiceTest
         // Assert
         Assert.NotNull(exception);
         Assert.Equal("El campo 'Localidad' no puede ser omitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenBirthDateIsNotValid_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.Request(
+            cuilPatient: "20-45750673-8",
+            namePatient: "Lautaro",
+            lastNamePatient: "Lopez",
+            email: "lautalopez@gmail.com",
+            birthDate: DateTime.MinValue,
+            phone: "3814050905",
+            streetDomicilie: "Avenue Nine Of July",
+            numberDomicilie: 356,
+            localityDomicilie: "CABA",
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Fecha de nacimiento' es inválido o está fuera del rango permitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenPhoneIsWhiteSpace_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.Request(
+            cuilPatient: "20-45750673-8",
+            namePatient: "Lautaro",
+            lastNamePatient: "Lopez",
+            email: "lautalopez@gmail.com",
+            birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
+            phone: "   ",
+            streetDomicilie: "Avenue Nine Of July",
+            numberDomicilie: 356,
+            localityDomicilie: "CABA",
+            idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
+            affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Telefono' no puede ser omitido.", exception.Message);
     }
 }

@@ -101,7 +101,7 @@ private readonly IEmployeeRepository _employeeRepository;
             employeeRegistered.Cuil!.Value!,
             employeeRegistered.Registration!,
             employeeRegistered.PhoneNumber!,
-            GetRoleName(employeeRegistered),
+            employeeRegistered.GetType().Name, //GetRoleName(employeeRegistered),
             string.Empty
         ) : null;
     }

@@ -1,30 +1,50 @@
-﻿using IngSw_Application.DTOs;
-using IngSw_Application.Exceptions;
-using IngSw_Application.Interfaces;
-using IngSw_Application.Services;
-using IngSw_Domain.Entities;
-using IngSw_Domain.Interfaces;
-using IngSw_Domain.ValueObjects;
+﻿using IngSw_Tfi.Application.DTOs;
+using IngSw_Tfi.Application.Exceptions;
+using IngSw_Tfi.Application.Interfaces;
+using IngSw_Tfi.Application.Services;
+using IngSw_Tfi.Domain.Entities;
+using IngSw_Tfi.Domain.Exception;
+using IngSw_Tfi.Domain.Interfaces;
+using IngSw_Tfi.Domain.Repository;
+using IngSw_Tfi.Domain.ValueObjects;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using NSubstitute;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using Xunit;
 
 namespace IngSw_Tests.Login;
 
 public class AuthServiceTest
 {
-	private readonly IEmployeeRepository _employeeRepository;
-	private readonly AuthService _authService;
-	public AuthServiceTest(/*IConfiguration configuration*/)
-	{
-		_employeeRepository = Substitute.For<IEmployeeRepository>();
-		_authService = new AuthService(_employeeRepository/*, configuration*/);
-	}
+    private readonly IEmployeeRepository _employeeRepository;
+    private readonly AuthService _authService;
+    public AuthServiceTest()
+    {
+        _employeeRepository = Substitute.For<IEmployeeRepository>();
+
+        var settings = new Dictionary<string, string?>
+        {
+            { "Jwt:Key", "ReplaceWithAStrongSecretKeyChangeInProduction" },
+            { "Jwt:Issuer", "IngSwTfi.Api" },
+            { "Jwt:Audience", "IngSwTfi.Client" },
+            { "Jwt:ExpiresMinutes", "60" }
+        };
+
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(settings!)
+            .Build();
+
+        _authService = new AuthService(_employeeRepository, configuration);
+    }
     [Fact]
     public async Task Login_WhenYouEnterTheCorrectEmailAndPassword_ThenYouLogIn_ShouldGetTheEmployee()
-	{
-		// Arrange
+    {
+        // Arrange
 
-		var userDto = new UserDto.Request("ramirobrito@gmail.com", "bocateamo");
+        var userDto = new UserDto.Request("ramirobrito@gmail.com", "bocateamo");
         var employeeFound = new Employee
         {
             Name = "Ramiro",
@@ -40,11 +60,11 @@ public class AuthServiceTest
             }
         };
         _employeeRepository.GetByEmail("ramirobrito@gmail.com")!
-			.Returns(Task.FromResult(employeeFound));
+            .Returns(Task.FromResult(employeeFound));
 
-		// Act
+        // Act
 
-		var result = await _authService.Login(userDto);
+        var result = await _authService.Login(userDto);
 
         // Assert
 
@@ -89,9 +109,9 @@ public class AuthServiceTest
     [Fact]
     public async Task Login_WhenEnteredInvalidPassword_ShouldThrowEntityNotFoundException()
     {
-		// Arrange
+        // Arrange
 
-		var userDto = new UserDto.Request("ramirobrito@gmail.com", "riverteamo");
+        var userDto = new UserDto.Request("ramirobrito@gmail.com", "riverteamo");
         var employeeFound = new Employee
         {
             Name = "Ramiro",
@@ -107,7 +127,7 @@ public class AuthServiceTest
             }
         };
         _employeeRepository.GetByEmail("ramirobrito@gmail.com")!
-			.Returns(Task.FromResult(employeeFound));
+            .Returns(Task.FromResult(employeeFound));
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<EntityNotFoundException>(
@@ -119,9 +139,9 @@ public class AuthServiceTest
     [Fact]
     public async Task Login_WhenEnteredEmptyEmail_ShouldThrowArgumentException()
     {
-		// Arrange
+        // Arrange
 
-		var userDto = new UserDto.Request("", "riverteamo");
+        var userDto = new UserDto.Request("", "riverteamo");
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ArgumentException>(
@@ -132,10 +152,10 @@ public class AuthServiceTest
     }
     [Fact]
     public async Task Login_WhenEnteredEmptyPassword_ShouldThrowArgumentException()
-	{
-		// Arrange
+    {
+        // Arrange
 
-		var userDto = new UserDto.Request("ramirobrito@gmail.com", "");
+        var userDto = new UserDto.Request("ramirobrito@gmail.com", "");
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ArgumentException>(
@@ -161,8 +181,25 @@ public class AuthServiceTest
             typeEmployee: "Nurse"
             );
 
-        _employeeRepository.Register(Arg.Any<Employee>())
-            .Returns(callInfo => callInfo.Arg<Employee>());
+        Employee? employeeCaptured = null;
+
+        _employeeRepository
+            .Register(Arg.Do<Employee>(x => employeeCaptured = x))!
+            .Returns(Task.FromResult<Employee>(new Nurse
+            {
+                Id = Guid.NewGuid(),
+                Name = "Ramiro",
+                LastName = "Brito",
+                Email = "ramirobrito@gmail.com",
+                PhoneNumber = "381754963",
+                Cuil = Cuil.Create("20-45750673-8"),
+                Registration = "LO78Q",
+                User = new User
+                {
+                    Email = "ramirobrito@gmail.com",
+                    Password = "HASHED-PASS"
+                }
+            }));
 
         //Act
         var result = await _authService.Register(userDto);
@@ -899,5 +936,59 @@ public class AuthServiceTest
         //Assert
         Assert.NotNull(exception);
         Assert.Equal("El campo 'Tipo de Empleado' no puede ser omitido.", exception.Message);
+    }
+    [Fact]
+    public async Task Login_WhenYouLoginSuccessfully_ThenTokenGenerator_ShouldCreateValidToken()
+    {
+        // Arrange
+        var handler = new JwtSecurityTokenHandler();
+        var key = Encoding.UTF8.GetBytes("ReplaceWithAStrongSecretKeyChangeInProduction");
+        var validationParams = new TokenValidationParameters
+        {
+            ValidIssuer = "IngSwTfi.Api",
+            ValidAudience = "IngSwTfi.Client",
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateIssuerSigningKey = true,
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true
+        };
+        var userDto = new UserDto.Request("ramirobrito@gmail.com", "bocateamo");
+        var employeeFound = new Employee
+        {
+            Name = "Ramiro",
+            LastName = "Brito",
+            Cuil = Cuil.Create("20-42365986-7"),
+            PhoneNumber = "381754963",
+            Email = "ramirobrito@gmail.com",
+            Registration = "LO78Q",
+            User = new User
+            {
+                Email = "ramirobrito@gmail.com",
+                Password = BCrypt.Net.BCrypt.HashPassword("bocateamo"),
+            }
+        };
+        _employeeRepository.GetByEmail(userDto.email!)!
+            .Returns(Task.FromResult(employeeFound));
+
+        // Act
+
+        var result = await _authService.Login(userDto);
+
+        // Assert
+
+        await _employeeRepository.Received(1).GetByEmail(Arg.Any<string>());
+        Assert.NotNull(result);
+        Assert.False(string.IsNullOrWhiteSpace(result.token));
+        Assert.Equal(3, result.token.Split('.').Length);
+        Assert.Equal(result.id, handler.
+            ValidateToken(result.token, validationParams, out _).
+            FindFirst(ClaimTypes.NameIdentifier)?.Value);
+        Assert.Equal(result.name, handler.
+            ValidateToken(result.token, validationParams, out _).
+            FindFirst(ClaimTypes.Name)?.Value);
+        Assert.Equal(result.typeEmployee, handler.
+            ValidateToken(result.token, validationParams, out _).
+            FindFirst(ClaimTypes.Role)?.Value);
     }
 }

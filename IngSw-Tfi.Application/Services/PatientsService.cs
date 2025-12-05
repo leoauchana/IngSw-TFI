@@ -29,6 +29,7 @@ public class PatientsService : IPatientsService
         {
             { "Apellido", patientData.lastNamePatient },
             { "Nombre", patientData.namePatient },
+            { "Telefono", patientData.phone },
             { "Calle", patientData.streetDomicilie },
             { "Localidad", patientData.localityDomicilie }
         };
@@ -39,6 +40,8 @@ public class PatientsService : IPatientsService
         }
         if (patientData.numberDomicilie <= 0 || patientData.numberDomicilie > 999999)
             throw new ArgumentException("El campo 'Número' no puede ser omitido o exceder el límite permitido.");
+        if (patientData.birthDate < new DateTime(1900, 1, 1) || patientData.birthDate > DateTime.Today)
+            throw new ArgumentException("El campo 'Fecha de nacimiento' es inválido o está fuera del rango permitido.");
 
         Affiliate? affiliation = null;
         //bool oneCompleted = string.IsNullOrEmpty(patientData.idSocialWork) != string.IsNullOrEmpty(patientData.affiliateNumber);
