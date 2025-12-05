@@ -5,7 +5,12 @@ namespace IngSw_Tfi.Domain.Repository;
 public interface ISocialWorkRepository
 {
     Task<List<SocialWork>?> GetAll();
+<<<<<<< HEAD
     Task<bool> ValidateInsuranceAndMember(string nameSocial, int memerNumber);
     void AddSocialWork(SocialWork newSocialWork);
+=======
+    bool ValidateInsuranceAndMember(string nameSocial, int memerNumber);
+
+>>>>>>> lastFixTests
     Task<SocialWork?> GetById(string idSocialWork);
 }
