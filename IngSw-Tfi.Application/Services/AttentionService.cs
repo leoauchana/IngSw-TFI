@@ -62,12 +62,15 @@ public class AttentionService : IAttentionService
             _ => throw new BusinessConflicException($"Estado '{newStatus}' no válido")
         };
 
-        var queueIncome = _priorityQueueService.Dequeue();
-        if (queueIncome == null) throw new BusinessConflicException("Hubo un error al obtener el ingreso siguiente de la cola de espera.");
+        //var queueIncome = _priorityQueueService.Dequeue();
+        //if (queueIncome == null) throw new BusinessConflicException("Hubo un error al obtener el ingreso siguiente de la cola de espera.");
+        //income.IncomeStatus = status;
+        //queueIncome.IncomeStatus = status;
+        //await _incomeRepository.UpdateStatus(income.Id, status);
+        //return MapIncomeToDto(queueIncome);
         income.IncomeStatus = status;
-        queueIncome.IncomeStatus = status;
         await _incomeRepository.UpdateStatus(income.Id, status);
-        return MapIncomeToDto(queueIncome);
+        return MapIncomeToDto(income);
     }
     private AttentionDto.Response MapToDto(Attention attention)
     {
