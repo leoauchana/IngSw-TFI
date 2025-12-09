@@ -22,7 +22,7 @@ public class AttentionRepository : IAttentionRepository
         return attentionsRegistered.Select(a => MapEntity(a)).ToList();
     }
 
-    public async Task<Attention> GetById(string idAttention)
+    public async Task<Attention?> GetById(string idAttention)
     {
         var attentionData = await _attentionDao.GetById(idAttention);
         if (attentionData == null) return null;

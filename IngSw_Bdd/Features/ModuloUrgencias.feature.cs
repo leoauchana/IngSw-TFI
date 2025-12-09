@@ -244,7 +244,7 @@ await this.FeatureBackgroundAsync();
                             "San Martín",
                             "452",
                             "San Miguel",
-                            "AF-2025-8891",
+                            "4854166",
                             "b4496ccd-1661-48ff-90e9-1432055e0226"});
 #line 28
  await testRunner.WhenAsync("registro al paciente a urgencias con los siguientes datos:", ((string)(null)), table6, "When ");

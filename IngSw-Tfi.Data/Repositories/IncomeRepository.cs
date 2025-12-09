@@ -143,6 +143,8 @@ public class IncomeRepository : IIncomeRepository
     {
         var incomeData = await _incomeDao.VerifyIncome(idPatient);
         if (incomeData == null) return false;
+        var incomeFound = MapEntity(incomeData);
+        if (incomeFound.IncomeStatus == IncomeStatus.FINISHED) return false;
         return true;
     }
 }

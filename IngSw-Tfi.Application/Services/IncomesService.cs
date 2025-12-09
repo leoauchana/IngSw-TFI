@@ -34,11 +34,11 @@ public class IncomesService : IIncomesService
         if (patientFound == null) throw new EntityNotFoundException($"No se encontró ningún paciente con cuil {newIncome.idPatient}");
         // Verificar que el paciente no tenga un ingreso activo
         var hasActive = await _incomeRepository.HasActiveIncomeByPatient(newIncome.idPatient);
+        Console.WriteLine(hasActive);
         if (hasActive) throw new BusinessConflicException("El paciente ya tiene un ingreso activo.");
 
         var argentinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Argentina/Buenos_Aires");
         var argentinaTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, argentinaTimeZone);
-
         var income = new Income
         {
             Description = newIncome.report,
@@ -54,8 +54,6 @@ public class IncomesService : IIncomesService
             Nurse = (Nurse)nurseFound
         };
         await _incomeRepository.AddIncome(income);
-        var i = _incomeRepository.GetAll();
-        Console.WriteLine(i);
         _priorityQueueService.Enqueue(income);
         return MapToDto(income);
     }
@@ -101,7 +99,7 @@ public class IncomesService : IIncomesService
                 income.Patient?.Affiliate?.AffiliateNumber
             )
         );
-        var levelId = (int)income.EmergencyLevel + 1;
+        var levelId = income.EmergencyLevel != null ? (int)income.EmergencyLevel + 1 : 0;
         var levelLabel = income.EmergencyLevel switch
         {
             EmergencyLevel.CRITICAL => "Crítica",

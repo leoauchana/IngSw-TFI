@@ -35,11 +35,11 @@ public class IncomeRepositoryInMemory : IIncomeRepository
         return Task.FromResult(income);
     }
 
-    public async Task<bool> HasActiveIncomeByPatient(string idPatient)
+    public Task<bool> HasActiveIncomeByPatient(string idPatient)
     {
         var incomeFound =  Incomes.Where(i => i.Patient!.Id.ToString().Equals(idPatient)).FirstOrDefault();
-        if (incomeFound == null) return false;
-        return true;
+        if (incomeFound == null) return Task.FromResult(false);
+        return Task.FromResult(true);
     }
 
     public Task UpdateStatus(Guid id, IncomeStatus status)

@@ -15,14 +15,14 @@ public class EmployeeRepositoryInMemory : IEmployeeRepository
         throw new NotImplementedException();
     }
 
-    public async Task<Employee?> GetById(string idEmployee)
+    public Task<Employee?> GetById(string idEmployee)
     {
-        return Employees.Where(e => e.Id.ToString().Equals(idEmployee)).First();
+        return Task.FromResult(Employees.Where(e => e.Id.ToString().Equals(idEmployee)).First() ?? null);
     }
 
-    public async Task<Employee?> Register(Employee newEmployee)
+    public Task<Employee?> Register(Employee newEmployee)
     {
         Employees.Add(newEmployee);
-        return newEmployee;
+        return Task.FromResult(newEmployee ?? null);
     }
 }

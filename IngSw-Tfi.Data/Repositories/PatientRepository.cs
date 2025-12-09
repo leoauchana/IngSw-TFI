@@ -27,10 +27,11 @@ public class PatientRepository : IPatientRepository
     }
     public async Task AddPatient(Patient newPatient)
     {
-        if(newPatient.Affiliate == null)
+        if (newPatient.Affiliate == null)
         {
             await _patientDao.AddPatient(newPatient);
-        }else await _patientDao.AddPatientWithSocialWork(newPatient);
+        }
+        else await _patientDao.AddPatientWithSocialWork(newPatient);
     }
 
     public Task<Patient?> GetById(int id)
@@ -66,7 +67,9 @@ public class PatientRepository : IPatientRepository
             Id = reader.ContainsKey("id_patient") && Guid.TryParse(Convert.ToString(reader["id_patient"]), out var g) ? g : Guid.NewGuid(),
             Name = reader.ContainsKey("first_name") ? reader["first_name"]?.ToString() : reader.GetValueOrDefault("name")?.ToString(),
             LastName = reader.ContainsKey("last_name") ? reader["last_name"]?.ToString() : reader.GetValueOrDefault("last_name")?.ToString(),
-            Cuil = reader.ContainsKey("patient_cuil") && reader["patient_cuil"] != null ? Cuil.Create(reader["patient_cuil"]?.ToString()) : null,
+            Cuil = reader.ContainsKey("patient_cuil") && reader["patient_cuil"] is not null
+                    ? Cuil.Create(reader["patient_cuil"]!.ToString()!)
+                    : null,
             Email = reader.ContainsKey("email") ? reader["email"]?.ToString() : string.Empty,
             Phone = reader.ContainsKey("phone") && reader["phone"] != DBNull.Value ? reader["phone"]?.ToString() : null,
             BirthDate = reader.ContainsKey("birth_date") && reader["birth_date"] != DBNull.Value

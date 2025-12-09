@@ -4,6 +4,7 @@ using IngSw_Tfi.Domain.Entities;
 using IngSw_Tfi.Domain.Enums;
 using IngSw_Tfi.Domain.Repository;
 using IngSw_Tfi.Domain.ValueObjects;
+using System;
 
 namespace IngSw_Bdd.StepDefinitions
 {
@@ -127,6 +128,33 @@ namespace IngSw_Bdd.StepDefinitions
             if (patientData == null)
                 throw new NullReferenceException("No se obtuvieron los datos del paciente a registrar");
 
+            _patient = new Patient
+            {
+                Id = Guid.NewGuid(), // No viene en tabla
+                Cuil = Cuil.Create(patientData["Cuil"]),
+                LastName = patientData["LastName"],
+                Name = patientData["Name"],
+                Email = patientData["Email"],
+                Phone = patientData["Phone"],
+                BirthDate = DateTime.Parse(patientData["BirthDate"]),
+                Domicilie = new Domicilie
+                {
+                    Street = patientData["Street"],
+                    Number = int.Parse(patientData["Number"]),
+                    Locality = patientData["Locality"]
+                },
+                Affiliate = new Affiliate
+                {
+                    AffiliateNumber = patientData["AffiliateNumber"],
+                    SocialWork = new SocialWork
+                    {
+                        Id = Guid.TryParse(patientData["IdSocialWork"], out var swId) ? swId : Guid.NewGuid(),
+                        Name = string.Empty
+                    }
+                }
+            };
+
+
             var cuil = patientData["Cuil"];
             var name = patientData["Name"];
             var lastName = patientData["LastName"];
@@ -179,6 +207,8 @@ namespace IngSw_Bdd.StepDefinitions
                 ? parsedLevel
                 : 0;
             var (frequencySystolic, frequensyDiastolic) = (patientData["Tension Arterial"].Split('/') is var p) ? (float.Parse(p[0]), float.Parse(p[1])) : (0, 0);
+            if (string.IsNullOrEmpty(idPatient))
+                throw new ArgumentException("Id de paciente nulo");
             var newIncome = new IncomeDto.RequestT(level, frequencyCardiac, frequensyDiastolic, frequencyRespiratory,
                 frequencySystolic, idPatient, report, temperature);
             try
@@ -199,13 +229,17 @@ namespace IngSw_Bdd.StepDefinitions
         [Then("La lista de espera no contendrá el cuil:")]
         public async Task ThenLaListaDeEsperaNoContendraElCuil(DataTable dataTable)
         {
-            var expectedCuil = dataTable.Rows.FirstOrDefault();
-            if (expectedCuil == null)
+            var row = dataTable.Rows.FirstOrDefault();
+            if (row == null)
                 throw new NullReferenceException("No se obtuvo el cuil esperado en la cola de espera");
+
+            var expectedCuil = row["Cuil"]?.ToString();
+            if (expectedCuil == null)
+                throw new NullReferenceException("El valor Cuil en el DataTable es nulo");
             var incomesList = await _incomesService.GetAll();
             if (incomesList == null)
                 throw new NullReferenceException("La lista de ingreso es nula");
-            Assert.False(incomesList!.Any(i => i.paciente.cuilPatient == expectedCuil["Cuil"]));
+            Assert.DoesNotContain(incomesList, i => i.paciente.cuilPatient == expectedCuil);
         }
         // Scenary 4 
         [Then("se informa que la frecuencia respiratorio se cargo de forma incorrecta {string}")]
