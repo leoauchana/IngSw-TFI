@@ -1,5 +1,4 @@
 ﻿using IngSw_Tfi.Data.Database;
-using IngSw_Tfi.Domain.Entities;
 using MySql.Data.MySqlClient;
 
 namespace IngSw_Tfi.Data.DAOs;
@@ -22,9 +21,5 @@ public class SocialWorkDao : DaoBase
             new MySqlParameter("@IdSocialWork", idSocialWork)
         };
         return await ExecuteReader(query, parameters);
-    }
-    public async Task<Dictionary<string, object>> GetByNameAndMemberNumber(string nameSocial, int memberNumber)
-    {
-        throw new NotImplementedException();
     }
 }

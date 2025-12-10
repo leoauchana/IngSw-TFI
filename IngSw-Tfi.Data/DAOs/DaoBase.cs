@@ -30,7 +30,10 @@ public abstract class DaoBase
                 {
                     var row = new Dictionary<string, object>(reader.FieldCount);
                     for (int i = 0; i < reader.FieldCount; i++)
-                        row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                        //row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                        row[reader.GetName(i)] = reader.IsDBNull(i)
+                                                ? DBNull.Value
+                                                : reader.GetValue(i);
                     result.Add(row);
                 }
             }
@@ -68,86 +71,4 @@ public abstract class DaoBase
             throw;
         }
     }
-
-    //// Overloads that use an existing connection and transaction (do not dispose connection)
-    //protected async Task<List<Dictionary<string, object>>?> ExecuteReader(IDbConnection conn, IDbTransaction tx, string query, params MySqlParameter[] parameters)
-    //{
-    //    var result = new List<Dictionary<string, object>>();
-    //    using (var cmd = new MySqlCommand(query, (MySqlConnection)conn))
-    //    {
-    //        if (tx != null)
-    //            cmd.Transaction = (MySqlTransaction)tx;
-    //        if (parameters != null && parameters.Length > 0)
-    //            cmd.Parameters.AddRange(parameters);
-
-    //        using (var reader = await cmd.ExecuteReaderAsync())
-    //        {
-    //            while (await reader.ReadAsync())
-    //            {
-    //                var row = new Dictionary<string, object>(reader.FieldCount);
-    //                for (int i = 0; i < reader.FieldCount; i++)
-    //                    row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
-    //                result.Add(row);
-    //            }
-    //        }
-    //    }
-    //    return result.Count > 0 ? result : null;
-    //}
-
-    //protected async Task<int> ExecuteNonQuery(IDbConnection conn, IDbTransaction tx, string query, params MySqlParameter[] parameters)
-    //{
-    //    using (var cmd = new MySqlCommand(query, (MySqlConnection)conn))
-    //    {
-    //        if (tx != null)
-    //            cmd.Transaction = (MySqlTransaction)tx;
-    //        if (parameters != null && parameters.Length > 0)
-    //            cmd.Parameters.AddRange(parameters);
-    //        return await cmd.ExecuteNonQueryAsync();
-    //    }
-    //}
-    //// Overloads that use an existing connection/transaction (caller manages transaction/connection lifetime)
-    //protected async Task<List<Dictionary<string, object>>?> ExecuteReader(string query, IDbConnection conn, IDbTransaction? tx, params MySqlParameter[] parameters)
-    //{
-    //    var result = new List<Dictionary<string, object>>();
-    //    var mysqlConn = (MySqlConnection)conn;
-    //    using (var cmd = new MySqlCommand(query, mysqlConn))
-    //    {
-    //        if (parameters != null && parameters.Length > 0)
-    //            cmd.Parameters.AddRange(parameters);
-    //        if (tx != null)
-    //            cmd.Transaction = (MySqlTransaction)tx;
-
-    //        var mustClose = conn.State != ConnectionState.Open;
-    //        if (mustClose) conn.Open();
-    //        using (var reader = await cmd.ExecuteReaderAsync())
-    //        {
-    //            while (await reader.ReadAsync())
-    //            {
-    //                var row = new Dictionary<string, object>(reader.FieldCount);
-    //                for (int i = 0; i < reader.FieldCount; i++)
-    //                    row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
-    //                result.Add(row);
-    //            }
-    //        }
-    //        if (mustClose) conn.Close();
-    //    }
-    //    return result.Count > 0 ? result : null;
-    //}
-    //protected async Task<int> ExecuteNonQuery(string query, IDbConnection conn, IDbTransaction? tx, params MySqlParameter[] parameters)
-    //{
-    //    var mysqlConn = (MySqlConnection)conn;
-    //    using (var cmd = new MySqlCommand(query, mysqlConn))
-    //    {
-    //        if (parameters != null && parameters.Length > 0)
-    //            cmd.Parameters.AddRange(parameters);
-    //        if (tx != null)
-    //            cmd.Transaction = (MySqlTransaction)tx;
-
-    //        var mustClose = conn.State != ConnectionState.Open;
-    //        if (mustClose) conn.Open();
-    //        var res = await cmd.ExecuteNonQueryAsync();
-    //        if (mustClose) conn.Close();
-    //        return res;
-    //    }
-    //}
 }
