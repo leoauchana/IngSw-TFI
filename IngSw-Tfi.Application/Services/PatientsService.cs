@@ -1,7 +1,7 @@
 ﻿using IngSw_Tfi.Application.DTOs;
 using IngSw_Tfi.Application.Exceptions;
 using IngSw_Tfi.Application.Interfaces;
-using IngSw_Tfi.Data.DAOs;
+using IngSw_Tfi.Data.Repositories;
 using IngSw_Tfi.Domain.Entities;
 using IngSw_Tfi.Domain.Interfaces;
 using IngSw_Tfi.Domain.Repository;

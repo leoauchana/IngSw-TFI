@@ -136,7 +136,6 @@ private readonly IEmployeeRepository _employeeRepository;
         return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
     }
     private bool VerifyPassword(string passwordInput, string hashedPassword) => BCrypt.Net.BCrypt.Verify(passwordInput, hashedPassword);
-    
     private string GetRoleName(Employee employee)
     {
         return employee switch

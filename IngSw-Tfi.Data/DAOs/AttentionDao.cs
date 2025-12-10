@@ -11,7 +11,6 @@ public class AttentionDao : DaoBase
     }
     public async Task AddAttention(Attention newAttention)
     {
-        // 1) Buscar si ya existe una atención para esa admisión
         var checkQuery = @"
             SELECT id_consultation
             FROM consultation
@@ -24,8 +23,7 @@ public class AttentionDao : DaoBase
         // 2) Si ya existe → actualizar el reporte
         if (existing != null && existing.Count > 0)
         {
-            string consultationId = existing[0]["id_consultation"].ToString();
-
+            string consultationId = existing[0]["id_consultation"].ToString()!;
             var updateQuery = @"
             UPDATE consultation
             SET 
