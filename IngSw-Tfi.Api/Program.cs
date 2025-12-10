@@ -2,7 +2,6 @@
 using IngSw_Tfi.Api.Middlewares;
 using IngSw_Tfi.Application;
 using IngSw_Tfi.Data;
-using IngSw_Tfi.Transversal;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -49,7 +48,6 @@ namespace IngSw_Tfi.Api
 
             builder.Services.AddDataServices(builder.Configuration);
             builder.Services.AddApplicationServices();
-            builder.Services.AddTransversalServices();
 
             var jwtKey = builder.Configuration["Jwt:Key"];
             var jwtIssuer = builder.Configuration["Jwt:Issuer"];
