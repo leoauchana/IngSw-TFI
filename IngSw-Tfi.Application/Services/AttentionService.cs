@@ -17,7 +17,6 @@ public class AttentionService(IIncomeRepository incomeRepository, IPriorityQueue
 
     public async Task<AttentionDto.Response?> AddAttention(string idDoctor, AttentionDto.Request newAttention)
     {
-        Console.WriteLine($"Iniciando proceso de agregar atención...{idDoctor}");
         var doctorFound = await _employeeRepository.GetById(idDoctor);
         if (doctorFound == null) throw new EntityNotFoundException("No se encontró al doctor autenticado.");
         var incomeFound = await _incomeRepository.GetById(newAttention.idIncome);

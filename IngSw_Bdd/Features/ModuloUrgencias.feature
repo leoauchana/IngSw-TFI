@@ -7,6 +7,7 @@ Background:
 		| Id                                   | Name   | LastName |
 		| 2D7E2179-254D-4634-9655-56345F27A339 | Melisa | Rios     |
 
+@Escenario1
 Scenario: Ingreso del primer paciente a la lista de espera de urgencias
 	Given que estan registrados los siguientes pacientes:
 		| Id                                   | Cuil          | LastName | Name  | SocialWork    |
@@ -18,7 +19,7 @@ Scenario: Ingreso del primer paciente a la lista de espera de urgencias
 	Then La lista de espera esta ordenada por cuil de la siguiente manera:
 		| Cuil          |
 		| 20-45625563-9 |
-
+@Escenario2
 Scenario: Ingreso de un paciente sin registro previo a la lista de espera de urgencias
 	Given que no existe el paciente registrado
 	And que estan registradas las siguientes obras sociales:
@@ -34,7 +35,7 @@ Scenario: Ingreso de un paciente sin registro previo a la lista de espera de urg
 	Then La lista de espera esta ordenada por cuil de la siguiente manera:
 		| Cuil          |
 		| 20-45625563-4 |
-
+@Escenario3
 Scenario: Ingreso de un paciente con datos mandatorios faltantes
 	Given que estan registrados los siguientes pacientes:
 		| Id                                   | Cuil          | LastName | Name  | SocialWork    |
@@ -48,7 +49,7 @@ Scenario: Ingreso de un paciente con datos mandatorios faltantes
 	And La lista de espera no contendrá el cuil:
 		| Cuil          |
 		| 20-45625563-9 |
-
+@Escenario4
 Scenario: Ingreso de un paciente frecuencia respiratoria negativa
 	Given que estan registrados los siguientes pacientes:
 		| Id                                   | Cuil          | LastName | Name  | SocialWork    |
@@ -61,7 +62,7 @@ Scenario: Ingreso de un paciente frecuencia respiratoria negativa
 	And La lista de espera no contendrá el cuil:
 		| Cuil          |
 		| 20-45625563-9 |
-
+@Escenario5
 Scenario: Ingreso de un paciente con nivel de emergencia mayor a otro paciente ya en la lista de espera
 	Given que estan registrados los siguientes pacientes:
 		| Id                                   | Cuil          | LastName | Name   | SocialWork    |
@@ -80,7 +81,7 @@ Scenario: Ingreso de un paciente con nivel de emergencia mayor a otro paciente y
 		| 20-45625777-4 |
 		| 20-45625563-3 |
 		| 20-45625563-9 |
-
+@Escenario6
 Scenario: Ingreso de un paciente con nivel de emergencia menor a otro paciente ya en la lista de espera
 	Given que estan registrados los siguientes pacientes:
 		| Id                                   | Cuil          | LastName | Name   | SocialWork    |
@@ -97,7 +98,7 @@ Scenario: Ingreso de un paciente con nivel de emergencia menor a otro paciente y
 		| Cuil          |
 		| 20-45625563-3 |
 		| 20-45625777-4 |
-
+@Escenario7
 Scenario: Ingreso de un paciente con el mismo nivel de emergencia que otro paciente ya en la lista de espera
 	Given que estan registrados los siguientes pacientes:
 		| Id                                   | Cuil          | LastName | Name   | SocialWork    |
