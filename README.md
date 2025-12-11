@@ -1,4 +1,4 @@
-# 🏥 Sistema de Gestión - Backend (.NET / C#)
+# 🏥 Sistema de Guardia - Backend (.NET / C#)
 
 ![C# Logo](https://upload.wikimedia.org/wikipedia/commons/4/4f/Csharp_Logo.png)
 
