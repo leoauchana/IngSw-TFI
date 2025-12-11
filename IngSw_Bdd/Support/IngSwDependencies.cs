@@ -1,9 +1,7 @@
 ﻿using IngSw_Bdd.Mock;
 using IngSw_Tfi.Application.Interfaces;
 using IngSw_Tfi.Application.Services;
-using IngSw_Tfi.Domain.Interfaces;
 using IngSw_Tfi.Domain.Repository;
-using IngSw_Tfi.Transversal.Services;
 using Reqnroll.BoDi;
 
 namespace IngSw_Bdd.Support;
@@ -29,8 +27,6 @@ public class IngSwDependencies
 
         _container.RegisterTypeAs<PatientsService, IPatientsService>();
         _container.RegisterTypeAs<IncomesService, IIncomesService>();
-        _container.RegisterTypeAs<SocialWorkServiceApi, ISocialWorkServiceApi>();
-        _container.RegisterTypeAs<SocialWorkService, ISocialWorkService>();
 
         _container.RegisterTypeAs<PriorityQueueService, IPriorityQueueService>();
     }

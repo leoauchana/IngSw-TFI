@@ -32,11 +32,16 @@ public class SocialWorkRepository : ISocialWorkRepository
         return MapEntity(social.First());
     }
 
-    public  bool ValidateInsuranceAndMember(string name, int memberNumber)
+    public bool ValidateInsuranceAndMember(string name, string memberNumber)
     {
-        //var affiliateFound = await _socialWorkDao.GetByNameAndMemberNumber(name, memberNumber);
-        //if (affiliateFound == null) return false;
         return true;
+    }
+
+    public async Task<SocialWork?> ExistingSocialWork(string idSocialWork)
+    {
+        var social = await _socialWorkDao.GetById(idSocialWork);
+        if (social == null || !social.Any()) return null;
+        return MapEntity(social.First());
     }
 
     private SocialWork MapEntity(Dictionary<string, object> value)

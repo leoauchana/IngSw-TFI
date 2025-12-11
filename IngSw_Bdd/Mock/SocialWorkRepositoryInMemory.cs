@@ -19,13 +19,19 @@ public class SocialWorkRepositoryInMemory : ISocialWorkRepository
         throw new NotImplementedException();
     }
 
+    public Task<SocialWork?> ExistingSocialWork(string idSocialWork)
+    {
+        var socialWork = SocialWorks.FirstOrDefault(i => i.Id.ToString() == idSocialWork);
+        return Task.FromResult(socialWork);
+    }
+
     public Task<SocialWork?> GetById(string idSocialWork)
     {
         var socialWork = SocialWorks.FirstOrDefault(i => i.Id.ToString() == idSocialWork);
         return Task.FromResult(socialWork);
     }
 
-    public bool ValidateInsuranceAndMember(string nameSocial, int memerNumber)
+    public bool ValidateInsuranceAndMember(string nameSocial, string memerNumber)
     {
         return true;
     }

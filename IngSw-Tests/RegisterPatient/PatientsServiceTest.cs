@@ -17,12 +17,14 @@ public class PatientsServiceTest
     private readonly PatientsService _patientsService;
     private readonly ISocialWorkServiceApi _socialWorkServiceApi;
     private readonly ISocialWorkService _socialWorkServiceAffiliate;
+    private readonly ISocialWorkRepository _socialWorkRepository;
     public PatientsServiceTest()
     {
         _patientsRepository = Substitute.For<IPatientRepository>();
         _socialWorkServiceApi = Substitute.For<ISocialWorkServiceApi>();
         _socialWorkServiceAffiliate = Substitute.For<ISocialWorkService>();
-        _patientsService = new PatientsService(_patientsRepository, _socialWorkServiceApi, _socialWorkServiceAffiliate);
+        _socialWorkRepository = Substitute.For<ISocialWorkRepository>();
+        _patientsService = new PatientsService(_patientsRepository, _socialWorkRepository);
     }
     [Fact]
     public async Task AddPatient_WhenTheHealthcareExists_ShouldCreateThePatient()
@@ -45,9 +47,9 @@ public class PatientsServiceTest
             idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
             affiliateNumber: "123456"
         );
-        _socialWorkServiceApi.ExistingSocialWork(patientDto.idSocialWork!)!
+        _socialWorkRepository.ExistingSocialWork(patientDto.idSocialWork!)!
             .Returns(Task.FromResult(HealthCare));
-        _socialWorkServiceAffiliate.ValidateInsuranceAndMember(Arg.Any<SocialWorkDto.Validate>()).
+        _socialWorkRepository.ValidateInsuranceAndMember(Arg.Any<string>(), Arg.Any<string>()).
             Returns(true);
 
         // Act
@@ -55,8 +57,8 @@ public class PatientsServiceTest
 
         // Assert
         await _patientsRepository.Received(1).AddPatient(Arg.Any<Patient>());
-        await _socialWorkServiceApi.Received(1).ExistingSocialWork(Arg.Any<string>());
-        _socialWorkServiceAffiliate.Received(1).ValidateInsuranceAndMember(Arg.Any<SocialWorkDto.Validate>());
+        await _socialWorkRepository.Received(1).ExistingSocialWork(Arg.Any<string>());
+        _socialWorkRepository.Received(1).ValidateInsuranceAndMember(Arg.Any<string>(), Arg.Any<string>());
         Assert.NotNull(result);
         Assert.Equal(patientDto.cuilPatient, result.cuilPatient);
         Assert.Equal(patientDto.namePatient, result.namePatient);
@@ -107,7 +109,7 @@ public class PatientsServiceTest
             idSocialWork: "KO55BD63-40AC-471E-8397-A3B214FD5B8F",
             affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
         );
-        _socialWorkServiceApi.ExistingSocialWork(patientDto.idSocialWork!)!
+        _socialWorkRepository.ExistingSocialWork(patientDto.idSocialWork!)!
             .Returns(Task.FromResult<SocialWork?>(null));
 
         // Act & Assert
@@ -115,7 +117,7 @@ public class PatientsServiceTest
             () => _patientsService.AddPatient(patientDto)
         );
         Assert.Equal("La obra social no existe, por lo tanto no se puede registrar al paciente.", exception.Message);
-        await _socialWorkServiceApi.Received(1).ExistingSocialWork(Arg.Any<string>());
+        await _socialWorkRepository.Received(1).ExistingSocialWork(Arg.Any<string>());
         await _patientsRepository.Received(0).AddPatient(Arg.Any<Patient>());
     }
     [Fact]
@@ -137,9 +139,9 @@ public class PatientsServiceTest
         );
         var socialWorkFound = new SocialWork();
 
-        _socialWorkServiceApi.ExistingSocialWork(patientDto.idSocialWork!)!
+        _socialWorkRepository.ExistingSocialWork(patientDto.idSocialWork!)!
             .Returns(Task.FromResult<SocialWork?>(socialWorkFound));
-        _socialWorkServiceAffiliate.ValidateInsuranceAndMember(Arg.Any<SocialWorkDto.Validate>()).
+        _socialWorkRepository.ValidateInsuranceAndMember(Arg.Any<string>(), Arg.Any<string>()).
             Returns(false);
 
         // Act
@@ -148,9 +150,8 @@ public class PatientsServiceTest
         );
 
         //Assert
-        await _socialWorkServiceApi.Received(1).ExistingSocialWork(Arg.Any<string>());
-        _socialWorkServiceAffiliate.Received(1).ValidateInsuranceAndMember(Arg.Any<SocialWorkDto.Validate>());
-        //await _patientsRepository.Received(1).AddPatient(Arg.Any<Patient>());
+        await _socialWorkRepository.Received(1).ExistingSocialWork(Arg.Any<string>());
+        _socialWorkRepository.Received(1).ValidateInsuranceAndMember(Arg.Any<string>(), Arg.Any<string>());
         Assert.Equal("No se pudo registrar el paciente dado que no esta afiliado a la obra social.", exception.Message);
     }
     [Fact]
@@ -175,9 +176,9 @@ public class PatientsServiceTest
             idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
             affiliateNumber: "1234656"
         );
-        _socialWorkServiceApi.ExistingSocialWork(patientDto.idSocialWork!)!
+        _socialWorkRepository.ExistingSocialWork(patientDto.idSocialWork!)!
         .Returns(Task.FromResult(HealthCare));
-        _socialWorkServiceAffiliate.ValidateInsuranceAndMember(Arg.Any<SocialWorkDto.Validate>()).
+        _socialWorkRepository.ValidateInsuranceAndMember(Arg.Any<string>(), Arg.Any<string>()).
             Returns(true);
 
         // Act & Assert
@@ -188,72 +189,6 @@ public class PatientsServiceTest
         Assert.Equal("CUIL con formato inválido.", exception.Message);
         await _patientsRepository.DidNotReceive().AddPatient(Arg.Any<Patient>());
     }
-    //[Fact]
-    //public async Task AddPatient_WhenCuilIsNull_ThenShouldThrowExceptionAndNotCreateThePatient()
-    //{
-    //    // Arrange
-    //    var HealthCare = new SocialWork
-    //    {
-    //        Name = "OSPE",
-    //    };
-
-    //    var patientDto = new PatientDto.Request(
-    //        cuilPatient: null!,
-    //        namePatient: "Lautaro",
-    //        lastNamePatient: "Lopez",
-    //        email: "lautalopez@gmail.com",
-    //        birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
-    //        phone: "3814050905",
-    //        streetDomicilie: "Avenue Nine Of July",
-    //        numberDomicilie: 356,
-    //        localityDomicilie: "CABA",
-    //        idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
-    //        affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
-    //    );
-    //    _socialWorkServiceApi.ExistingSocialWork(patientDto.idSocialWork!)!
-    //    .Returns(Task.FromResult(HealthCare));
-
-    //    // Act & Assert
-    //    var exception = await Assert.ThrowsAsync<ArgumentException>(
-    //        () => _patientsService.AddPatient(patientDto)
-    //    );
-
-    //    Assert.Equal("CUIL no puede ser vacío.", exception.Message);
-
-    //    await _patientsRepository.DidNotReceive().AddPatient(Arg.Any<Patient>());
-    //}
-    //[Fact]
-    //public async Task AddPatient_WhenCuilIsWhiteSpace_ThenShouldThrowExceptionAndNotCreateThePatient()
-    //{
-    //    // Arrange
-    //    var HealthCare = new SocialWork
-    //    {
-    //        Name = "OSPE",
-    //    };
-
-    //    var patientDto = new PatientDto.Request(
-    //        cuilPatient: "   ",
-    //        namePatient: "Lautaro",
-    //        lastNamePatient: "Lopez",
-    //        email: "lautalopez@gmail.com",
-    //        birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
-    //        phone: "3814050905",
-    //        streetDomicilie: "Avenue Nine Of July",
-    //        numberDomicilie: 356,
-    //        localityDomicilie: "CABA",
-    //        idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
-    //        affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
-    //    );
-    //    _socialWorkServiceApi.ExistingSocialWork(patientDto.idSocialWork!)!
-    //    .Returns(Task.FromResult(HealthCare));
-
-    //    // Act & Assert
-    //    var exception = await Assert.ThrowsAsync<ArgumentException>(
-    //        () => _patientsService.AddPatient(patientDto)
-    //    );
-    //    Assert.Equal("CUIL no puede ser vacío.", exception.Message);
-    //    await _patientsRepository.DidNotReceive().AddPatient(Arg.Any<Patient>());
-    //}
     [Fact]
     public async Task AddPatient_WhenPatientAlreadyExists_ThenShouldThrowExceptionAndNotCreateThePatient()
     {
@@ -422,60 +357,6 @@ public class PatientsServiceTest
         Assert.NotNull(exception);
         Assert.Equal("El campo 'Apellido' no puede ser omitido.", exception.Message);
     }
-    //[Fact]
-    //public async Task AddPatient_WhenLastNameIsWhiteSpace_ShouldArgumentException()
-    //{
-    //    // Arrange
-    //    var patientDto = new PatientDto.Request(
-    //        cuilPatient: "20-45750673-8",
-    //        namePatient: "Lautaro",
-    //        lastNamePatient: "  ",
-    //        email: "lautalopez@gmail.com",
-    //        birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
-    //        phone: "3814050905",
-    //        streetDomicilie: "Avenue Nine Of July",
-    //        numberDomicilie: 356,
-    //        localityDomicilie: "CABA",
-    //        idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
-    //        affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
-    //    );
-
-    //    // Act
-    //    var exception = await Assert.ThrowsAsync<ArgumentException>(
-    //        () => _patientsService.AddPatient(patientDto)
-    //        );
-
-    //    // Assert
-    //    Assert.NotNull(exception);
-    //    Assert.Equal("El campo 'Apellido' no puede ser omitido.", exception.Message);
-    //}
-    //[Fact]
-    //public async Task AddPatient_WhenLastNameIsNull_ShouldArgumentException()
-    //{
-    //    // Arrange
-    //    var patientDto = new PatientDto.Request(
-    //        cuilPatient: "20-45750673-8",
-    //        namePatient: "Lautaro",
-    //        lastNamePatient: null!,
-    //        email: "lautalopez@gmail.com",
-    //        birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
-    //        phone: "3814050905",
-    //        streetDomicilie: "Avenue Nine Of July",
-    //        numberDomicilie: 356,
-    //        localityDomicilie: "CABA",
-    //        idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
-    //        affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
-    //    );
-
-    //    // Act
-    //    var exception = await Assert.ThrowsAsync<ArgumentException>(
-    //        () => _patientsService.AddPatient(patientDto)
-    //        );
-
-    //    // Assert
-    //    Assert.NotNull(exception);
-    //    Assert.Equal("El campo 'Apellido' no puede ser omitido.", exception.Message);
-    //}
     [Fact]
     public async Task AddPatient_WhenNameIsOmitted_ShouldArgumentException()
     {
@@ -503,60 +384,6 @@ public class PatientsServiceTest
         Assert.NotNull(exception);
         Assert.Equal("El campo 'Nombre' no puede ser omitido.", exception.Message);
     }
-    //[Fact]
-    //public async Task AddPatient_WhenNameIsWhiteSpace_ShouldArgumentException()
-    //{
-    //    // Arrange
-    //    var patientDto = new PatientDto.Request(
-    //        cuilPatient: "20-45750673-8",
-    //        namePatient: "   ",
-    //        lastNamePatient: "Lopez",
-    //        email: "lautalopez@gmail.com",
-    //        birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
-    //        phone: "3814050905",
-    //        streetDomicilie: "Avenue Nine Of July",
-    //        numberDomicilie: 356,
-    //        localityDomicilie: "CABA",
-    //        idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
-    //        affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
-    //    );
-
-    //    // Act
-    //    var exception = await Assert.ThrowsAsync<ArgumentException>(
-    //        () => _patientsService.AddPatient(patientDto)
-    //        );
-
-    //    // Assert
-    //    Assert.NotNull(exception);
-    //    Assert.Equal("El campo 'Nombre' no puede ser omitido.", exception.Message);
-    //}
-    //[Fact]
-    //public async Task AddPatient_WhenNameIsNull_ShouldArgumentException()
-    //{
-    //    // Arrange
-    //    var patientDto = new PatientDto.Request(
-    //        cuilPatient: "20-45750673-8",
-    //        namePatient: null!,
-    //        lastNamePatient: "Lopez",
-    //        email: "lautalopez@gmail.com",
-    //        birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
-    //        phone: "3814050905",
-    //        streetDomicilie: "Avenue Nine Of July",
-    //        numberDomicilie: 356,
-    //        localityDomicilie: "CABA",
-    //        idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
-    //        affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
-    //    );
-
-    //    // Act
-    //    var exception = await Assert.ThrowsAsync<ArgumentException>(
-    //        () => _patientsService.AddPatient(patientDto)
-    //        );
-
-    //    // Assert
-    //    Assert.NotNull(exception);
-    //    Assert.Equal("El campo 'Nombre' no puede ser omitido.", exception.Message);
-    //}
     [Fact]
     public async Task AddPatient_WhenStreetIsOmitted_ShouldArgumentException()
     {
@@ -584,60 +411,6 @@ public class PatientsServiceTest
         Assert.NotNull(exception);
         Assert.Equal("El campo 'Calle' no puede ser omitido.", exception.Message);
     }
-    //[Fact]
-    //public async Task AddPatient_WhenStreetIsWhiteSpace_ShouldArgumentException()
-    //{
-    //    // Arrange
-    //    var patientDto = new PatientDto.Request(
-    //        cuilPatient: "20-45750673-8",
-    //        namePatient: "Lautaro",
-    //        lastNamePatient: "Lopez",
-    //        email: "lautalopez@gmail.com",
-    //        birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
-    //        phone: "3814050905",
-    //        streetDomicilie: "   ",
-    //        numberDomicilie: 356,
-    //        localityDomicilie: "CABA",
-    //        idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
-    //        affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
-    //    );
-
-    //    // Act
-    //    var exception = await Assert.ThrowsAsync<ArgumentException>(
-    //        () => _patientsService.AddPatient(patientDto)
-    //        );
-
-    //    // Assert
-    //    Assert.NotNull(exception);
-    //    Assert.Equal("El campo 'Calle' no puede ser omitido.", exception.Message);
-    //}
-    //[Fact]
-    //public async Task AddPatient_WhenStreetIsNull_ShouldArgumentException()
-    //{
-    //    // Arrange
-    //    var patientDto = new PatientDto.Request(
-    //        cuilPatient: "20-45750673-8",
-    //        namePatient: "Lautaro",
-    //        lastNamePatient: "Lopez",
-    //        email: "lautalopez@gmail.com",
-    //        birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
-    //        phone: "3814050905",
-    //        streetDomicilie: null!,
-    //        numberDomicilie: 356,
-    //        localityDomicilie: "CABA",
-    //        idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
-    //        affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
-    //    );
-
-    //    // Act
-    //    var exception = await Assert.ThrowsAsync<ArgumentException>(
-    //        () => _patientsService.AddPatient(patientDto)
-    //        );
-
-    //    // Assert
-    //    Assert.NotNull(exception);
-    //    Assert.Equal("El campo 'Calle' no puede ser omitido.", exception.Message);
-    //}
     [Fact]
     public async Task AddPatient_WhenNumberIsOmitted_ShouldArgumentException()
     {
@@ -665,62 +438,6 @@ public class PatientsServiceTest
         Assert.NotNull(exception);
         Assert.Equal("El campo 'Número' no puede ser omitido o exceder el límite permitido.", exception.Message);
     }
-    //[Fact]
-    //public async Task AddPatient_WhenNumberIsNegative_ShouldArgumentException()
-    //{
-    //    // Arrange
-    //    var patientDto = new PatientDto.Request(
-    //        cuilPatient: "20-45750673-8",
-    //        namePatient: "Lautaro",
-    //        lastNamePatient: "Lopez",
-    //        email: "lautalopez@gmail.com",
-    //        birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
-    //        phone: "3814050905",
-    //        streetDomicilie: "Avenue Nine Of July",
-    //        numberDomicilie: -356,
-    //        localityDomicilie: "CABA",
-    //        idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
-    //        affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
-    //    );
-
-    //    // Act
-    //    var exception = await Assert.ThrowsAsync<ArgumentException>(
-    //        () => _patientsService.AddPatient(patientDto)
-    //        );
-
-    //    // Assert
-    //    Assert.NotNull(exception);
-    //    Assert.Equal("El campo 'Número' no puede ser omitido o exceder el límite permitido.", exception.Message);
-    //}
-    //[Fact]
-    //public async Task AddPatient_WhenNumberIsTooHigh_ShouldArgumentException()
-    //{
-    //    // Arrange
-    //    var patientDto = new PatientDto.Request(
-    //        cuilPatient: "20-45750673-8",
-    //        namePatient: "Lautaro",
-    //        lastNamePatient: "Lopez",
-    //        email: "lautalopez@gmail.com",
-    //        birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
-    //        phone: "3814050905",
-    //        streetDomicilie: "Avenue Nine Of July",
-    //        numberDomicilie: 1000000,
-    //        localityDomicilie: "CABA",
-    //        idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
-    //        affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
-    //    );
-
-
-    //    // Act
-    //    var exception = await Assert.ThrowsAsync<ArgumentException>(
-    //        () => _patientsService.AddPatient(patientDto)
-    //        );
-
-    //    // Assert
-    //    Assert.NotNull(exception);
-    //    Assert.Equal("El campo 'Número' no puede ser omitido o exceder el límite permitido.", exception.Message);
-    //    await _patientsRepository.Received(0).AddPatient(Arg.Any<Patient>());
-    //}
     [Fact]
     public async Task AddPatient_WhenLocalityIsOmitted_ShouldArgumentException()
     {
@@ -748,60 +465,6 @@ public class PatientsServiceTest
         Assert.NotNull(exception);
         Assert.Equal("El campo 'Localidad' no puede ser omitido.", exception.Message);
     }
-    //[Fact]
-    //public async Task AddPatient_WhenLocalityIsWhiteSpace_ShouldArgumentException()
-    //{
-    //    // Arrange
-    //    var patientDto = new PatientDto.Request(
-    //        cuilPatient: "20-45750673-8",
-    //        namePatient: "Lautaro",
-    //        lastNamePatient: "Lopez",
-    //        email: "lautalopez@gmail.com",
-    //        birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
-    //        phone: "3814050905",
-    //        streetDomicilie: "Avenue Nine Of July",
-    //        numberDomicilie: 356,
-    //        localityDomicilie: "   ",
-    //        idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
-    //        affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
-    //    );
-
-    //    // Act
-    //    var exception = await Assert.ThrowsAsync<ArgumentException>(
-    //        () => _patientsService.AddPatient(patientDto)
-    //        );
-
-    //    // Assert
-    //    Assert.NotNull(exception);
-    //    Assert.Equal("El campo 'Localidad' no puede ser omitido.", exception.Message);
-    //}
-    //[Fact]
-    //public async Task AddPatient_WhenLocalityIsNull_ShouldArgumentException()
-    //{
-    //    // Arrange
-    //    var patientDto = new PatientDto.Request(
-    //        cuilPatient: "20-45750673-8",
-    //        namePatient: "Lautaro",
-    //        lastNamePatient: "Lopez",
-    //        email: "lautalopez@gmail.com",
-    //        birthDate: new DateTime(2001, 09, 17, 13, 30, 0),
-    //        phone: "3814050905",
-    //        streetDomicilie: "Avenue Nine Of July",
-    //        numberDomicilie: 356,
-    //        localityDomicilie: null!,
-    //        idSocialWork: "CA50EF74-40AC-471E-8397-A3B214FD5B8F",
-    //        affiliateNumber: "7f0e47c2-59c4-4e2c-afdc-bb1631a12045"
-    //    );
-
-    //    // Act
-    //    var exception = await Assert.ThrowsAsync<ArgumentException>(
-    //        () => _patientsService.AddPatient(patientDto)
-    //        );
-
-    //    // Assert
-    //    Assert.NotNull(exception);
-    //    Assert.Equal("El campo 'Localidad' no puede ser omitido.", exception.Message);
-    //}
     [Fact]
     public async Task AddPatient_WhenBirthDateIsNotValid_ShouldArgumentException()
     {

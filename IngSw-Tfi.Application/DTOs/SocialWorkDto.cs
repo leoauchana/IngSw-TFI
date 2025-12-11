@@ -2,6 +2,6 @@
 
 public class SocialWorkDto
 {
-    public record Validate(string name, int memberNumber);
+    public record Validate(string name, string memberNumber);
     public record Response(Guid id, string name);
 }
