@@ -6,7 +6,7 @@ public interface ISocialWorkRepository
 {
     Task<List<SocialWork>?> GetAll();
     void AddSocialWork(SocialWork newSocialWork);
-    bool ValidateInsuranceAndMember(string nameSocial, string memerNumber);
+    bool ValidateInsuranceAndMember(string nameSocial, string? memerNumber);
     Task<SocialWork?> GetById(string idSocialWork);
     Task<SocialWork?> ExistingSocialWork(string idSocialWork);
 }

@@ -1,10 +1,7 @@
 ﻿using IngSw_Tfi.Application.DTOs;
 using IngSw_Tfi.Application.Exceptions;
-using IngSw_Tfi.Application.Interfaces;
 using IngSw_Tfi.Application.Services;
 using IngSw_Tfi.Domain.Entities;
-using IngSw_Tfi.Domain.Exception;
-using IngSw_Tfi.Domain.Interfaces;
 using IngSw_Tfi.Domain.Repository;
 using IngSw_Tfi.Domain.ValueObjects;
 using Microsoft.Extensions.Configuration;
@@ -13,7 +10,6 @@ using NSubstitute;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Xunit;
 
 namespace IngSw_Tests.Login;
 

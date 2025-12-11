@@ -32,7 +32,7 @@ public class SocialWorkRepository : ISocialWorkRepository
         return MapEntity(social.First());
     }
 
-    public bool ValidateInsuranceAndMember(string name, string memberNumber)
+    public bool ValidateInsuranceAndMember(string name, string? memberNumber)
     {
         return true;
     }

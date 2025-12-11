@@ -56,11 +56,10 @@ public class PatientsService : IPatientsService
             var socialWorkFound = await _socialWorkRepository.ExistingSocialWork(patientData.idSocialWork);
             if (socialWorkFound == null)
                 throw new BusinessConflicException("La obra social no existe, por lo tanto no se puede registrar al paciente.");
-           
-            affiliation = new Affiliate {SocialWork = socialWorkFound, AffiliateNumber = patientData.affiliateNumber };
-            var affiliateValidation = _socialWorkRepository.ValidateInsuranceAndMember(affiliation.SocialWork.Name!, patientData.affiliateNumber);
+            var affiliateValidation = _socialWorkRepository.ValidateInsuranceAndMember(socialWorkFound.Name!, patientData.affiliateNumber);
             if (!affiliateValidation)
                 throw new ArgumentException("No se pudo registrar el paciente dado que no esta afiliado a la obra social.");
+            affiliation = new Affiliate {SocialWork = socialWorkFound, AffiliateNumber = patientData.affiliateNumber };
         }
         var newPatient = new Patient
         {

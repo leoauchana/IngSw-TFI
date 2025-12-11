@@ -2,7 +2,7 @@
 using IngSw_Tfi.Application.Exceptions;
 using IngSw_Tfi.Application.Interfaces;
 using IngSw_Tfi.Application.Services;
-using IngSw_Tfi.Data.DAOs;
+using IngSw_Tfi.Data.Repositories;
 using IngSw_Tfi.Domain.Entities;
 using IngSw_Tfi.Domain.Interfaces;
 using IngSw_Tfi.Domain.Repository;
@@ -15,14 +15,10 @@ public class PatientsServiceTest
 {
     private readonly IPatientRepository _patientsRepository;
     private readonly PatientsService _patientsService;
-    private readonly ISocialWorkServiceApi _socialWorkServiceApi;
-    private readonly ISocialWorkService _socialWorkServiceAffiliate;
     private readonly ISocialWorkRepository _socialWorkRepository;
     public PatientsServiceTest()
     {
         _patientsRepository = Substitute.For<IPatientRepository>();
-        _socialWorkServiceApi = Substitute.For<ISocialWorkServiceApi>();
-        _socialWorkServiceAffiliate = Substitute.For<ISocialWorkService>();
         _socialWorkRepository = Substitute.For<ISocialWorkRepository>();
         _patientsService = new PatientsService(_patientsRepository, _socialWorkRepository);
     }
@@ -49,7 +45,7 @@ public class PatientsServiceTest
         );
         _socialWorkRepository.ExistingSocialWork(patientDto.idSocialWork!)!
             .Returns(Task.FromResult(HealthCare));
-        _socialWorkRepository.ValidateInsuranceAndMember(Arg.Any<string>(), Arg.Any<string>()).
+        _socialWorkRepository.ValidateInsuranceAndMember(HealthCare.Name, patientDto.affiliateNumber).
             Returns(true);
 
         // Act

@@ -31,7 +31,7 @@ public class SocialWorkRepositoryInMemory : ISocialWorkRepository
         return Task.FromResult(socialWork);
     }
 
-    public bool ValidateInsuranceAndMember(string nameSocial, string memerNumber)
+    public bool ValidateInsuranceAndMember(string nameSocial, string? memerNumber)
     {
         return true;
     }
